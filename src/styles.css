@@ -1,0 +1,45 @@
+/* src/styles.css */
+@import url('https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=DM+Sans:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0A2342;--teal:#1DB8A4;--blue:#2E86AB;--orange:#FF6B35;--purple:#7B61FF;--gold:#E8A838;
+  --bg:#F8FFFE;--muted:#8899AA;--border:rgba(10,35,66,0.08);
+  --surface:#fff;--text:#0A2342;--text-muted:#8899AA;
+  --font-display:'Cabinet Grotesk',sans-serif;--font-body:'DM Sans',sans-serif;
+}
+[data-theme="dark"]{--bg:#0D1B2A;--surface:#152235;--text:#E8F4F8;--text-muted:#6B8099;--border:rgba(255,255,255,0.08);--navy:#E8F4F8;}
+html,body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#D0E8E5;border-radius:3px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes confetti-fall{0%{transform:translateY(-10px) rotate(0deg);opacity:1}80%{opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes pointsFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-40px) scale(1.3)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+.fade-up{animation:fadeUp 0.4s ease forwards}
+.fade-in{animation:fadeIn 0.3s ease forwards}
+.slide-in{animation:slideIn 0.35s ease forwards}
+.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}
+
+.btn{font-family:var(--font-display);font-weight:800;border:none;border-radius:12px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;display:inline-flex;align-items:center;gap:8px;}
+.btn:hover{transform:translateY(-2px)}.btn:active{transform:translateY(0)}.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important}
+.btn-teal{background:var(--teal);color:#fff;padding:13px 24px;font-size:0.92rem}.btn-teal:hover{box-shadow:0 8px 24px rgba(29,184,164,0.4)}
+.btn-orange{background:var(--orange);color:#fff;padding:13px 24px;font-size:0.92rem}.btn-orange:hover{box-shadow:0 8px 24px rgba(255,107,53,0.4)}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--muted);padding:9px 16px;font-size:0.84rem}
+.btn-ghost:hover{border-color:var(--navy);color:var(--navy);transform:none}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px;transition:box-shadow 0.2s}
+.tab-btn{background:transparent;border:none;cursor:pointer;padding:10px 4px;font-family:var(--font-display);font-size:0.78rem;font-weight:700;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;transition:color 0.2s;flex:1}
+.tab-btn.active{color:var(--teal)}.tab-btn .tab-icon{font-size:20px}
+.input{padding:12px 16px;border-radius:10px;border:1.5px solid var(--border);font-family:var(--font-body);font-size:0.9rem;outline:none;background:var(--surface);color:var(--text);transition:border-color 0.2s;width:100%}
+.input:focus{border-color:var(--teal)}
+.spinner{width:48px;height:48px;border:3px solid rgba(29,184,164,0.2);border-top-color:var(--teal);border-radius:50%;animation:spin 1s linear infinite}
+.section-label{font-size:0.7rem;letter-spacing:3px;color:var(--teal);font-weight:700;text-transform:uppercase;font-family:var(--font-display)}
+.points-float{position:fixed;font-family:var(--font-display);font-weight:900;font-size:1.2rem;color:#FFB800;pointer-events:none;z-index:1000;animation:pointsFloat 1.5s ease-out forwards}
+.skeleton{background:linear-gradient(90deg,var(--border) 25%,rgba(255,255,255,0.4) 50%,var(--border) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
