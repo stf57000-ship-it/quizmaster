@@ -18,49 +18,67 @@ function parseJSON(raw) {
   return JSON.parse(text);
 }
 
+async function callWithRetry(fn, retries = 2) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i === retries) throw e;
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+}
+
 async function callProxy(prompt) {
   if (IS_DEV) {
-    const res = await fetch(OPENROUTER_URL, {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":`Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-        "HTTP-Referer":"https://concourssante.fr",
-        "X-Title":"ConcoursSanté"
-      },
-      body: JSON.stringify({
-        model:"anthropic/claude-sonnet-4-5",
-        messages:[{ role:"user", content:prompt }],
-        max_tokens:4000
-      })
+    return callWithRetry(async () => {
+      const res = await fetch(OPENROUTER_URL, {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+          "HTTP-Referer":"https://concourssante.fr",
+          "X-Title":"ConcoursSanté"
+        },
+        body: JSON.stringify({
+          model:"anthropic/claude-haiku-4-5",
+          messages:[{ role:"user", content:prompt }],
+          max_tokens:3000
+        })
+      });
+      if (!res.ok) throw new Error(`OpenRouter ${res.status}`);
+      const text = await res.text();
+      const data = JSON.parse(text);
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Contenu vide");
+      return parseJSON(content);
     });
-    const data = await res.json();
-    return parseJSON(data.choices[0].message.content);
   }
 
   const authHeader = await getAuthHeader();
   const headers = { "Content-Type":"application/json" };
   if (authHeader) headers["Authorization"] = authHeader;
 
-  const res = await fetch(PROXY_URL, {
-    method:"POST",
-    headers,
-    body:JSON.stringify({ prompt })
+  return callWithRetry(async () => {
+    const res = await fetch(PROXY_URL, {
+      method:"POST",
+      headers,
+      body:JSON.stringify({ prompt })
+    });
+    if (res.status === 429) {
+      const d = await res.json();
+      const e = new Error(d.message||"Limite atteinte");
+      e.code = "RATE_LIMIT_EXCEEDED";
+      throw e;
+    }
+    if (!res.ok) {
+      const d = await res.json().catch(()=>({}));
+      throw new Error(d.error||"Erreur IA. Réessayez.");
+    }
+    const text = await res.text();
+    const data = JSON.parse(text);
+    return parseJSON(data.content);
   });
-
-  if (res.status === 429) {
-    const d = await res.json();
-    const e = new Error(d.message||"Limite atteinte");
-    e.code = "RATE_LIMIT_EXCEEDED";
-    throw e;
-  }
-  if (!res.ok) {
-    const d = await res.json().catch(()=>({}));
-    throw new Error(d.error||"Erreur IA. Réessayez.");
-  }
-
-  const data = await res.json();
-  return parseJSON(data.content);
 }
 
 export async function generateQuiz(concours, difficulty, theme, errorMode=false, errorQuestions=[]) {

@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.jsx — v6.2 UX optimisée cible 18-25 ans
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "./hooks/useAuth.js";
 import { useProgress } from "./hooks/useProgress.js";
@@ -9,7 +9,8 @@ import { shouldTriggerSurpriseReward, getRandomSurpriseReward, calculatePoints, 
 
 import { AuthModal }    from "./components/AuthModal.jsx";
 import { PricingModal } from "./components/PricingModal.jsx";
-import { BadgeNotification, LoadingScreen } from "./components/UI.jsx";
+import { BadgeNotification } from "./components/UI.jsx";
+import { LoadingQuiz }  from "./components/LoadingQuiz.jsx";
 import { BadgeShareCard, StreakShareCard } from "./components/ShareCard.jsx";
 import { ChallengeBanner, readChallengeFromURL } from "./components/ChallengeCard.jsx";
 import { SurpriseReward, StreakWarning, LevelBadge, CuriosityHook, WelcomeBack } from "./components/MicroReward.jsx";
@@ -20,6 +21,7 @@ import { HomeScreen }       from "./screens/HomeScreen.jsx";
 import { QuizScreen }       from "./screens/QuizScreen.jsx";
 import { ResultScreen, FlashcardsScreen } from "./screens/ResultScreen.jsx";
 import { DashboardScreen, BadgesScreen, LeaderboardScreen } from "./screens/DashboardScreen.jsx";
+import { PremiumSuccess }   from "./screens/PremiumSuccess.jsx";
 
 function showFloatingPoints(pts) {
   const el=document.createElement("div");
@@ -29,7 +31,7 @@ function showFloatingPoints(pts) {
 }
 
 export default function App() {
-  const { user, loading:authLoading, isPremium, logout, userName } = useAuth();
+  const { user, loading:authLoading, isPremium, logout, userName, refreshPremium } = useAuth();
   const { state:appState, update, newBadge, clearBadge, syncStatus, canStartQuiz, consumeQuizSlot, dailyRemaining } = useProgress(user, isPremium);
 
   const [screen,setScreen]       = useState("landing");
@@ -37,6 +39,7 @@ export default function App() {
   const [darkMode,setDarkMode]   = useState(()=>localStorage.getItem("cs_dark")==="1");
   const [showAuth,setShowAuth]       = useState(false);
   const [showPricing,setShowPricing] = useState(false);
+  const [showPremiumSuccess,setShowPremiumSuccess] = useState(false);
 
   const [surpriseReward,setSurpriseReward] = useState(null);
   const [streakWarning,setStreakWarning]   = useState(null);
@@ -50,13 +53,25 @@ export default function App() {
 
   const [sessionData,setSessionData] = useState(null);
   const [loading,setLoading]         = useState(false);
+  const [loadMode,setLoadMode]       = useState("quiz");
   const [loadError,setLoadError]     = useState(null);
 
   const points = calculatePoints(appState);
   const level  = getPointsLevel(points);
 
   useEffect(()=>{ document.documentElement.setAttribute("data-theme",darkMode?"dark":"light"); localStorage.setItem("cs_dark",darkMode?"1":"0"); },[darkMode]);
-  useEffect(()=>{ const p=new URLSearchParams(window.location.search); if(p.get("payment")==="success"){window.history.replaceState({},""," /");setTimeout(()=>window.location.reload(),1000);} },[]);
+
+  // Retour de Stripe
+  useEffect(()=>{
+    const p=new URLSearchParams(window.location.search);
+    if(p.get("payment")==="success"){
+      window.history.replaceState({},"","/");
+      refreshPremium().then(isPrem=>{
+        setShowPremiumSuccess(true);
+      });
+    }
+  },[]);
+
   useEffect(()=>{ if(authLoading||!appState.lastDay)return; const d=Math.floor((new Date()-new Date(appState.lastDay))/86400000); const msg=getWelcomeBackMessage(userName,d,appState.streak); if(msg)setWelcomeBack(msg); },[authLoading,userName]);
   useEffect(()=>{ setStreakWarning(getStreakWarning(appState.streak,appState.lastDay)); },[appState.streak,appState.lastDay]);
   useEffect(()=>{ const s=appState.streak||0; if([7,14,30,60,100].includes(s)){const k=`streak_shown_${s}`;if(!localStorage.getItem(k)){localStorage.setItem(k,"1");setShareStreak(s);}} },[appState.streak]);
@@ -67,7 +82,8 @@ export default function App() {
 
   const handleStart=async({mode,concours,difficulty,theme})=>{
     const check=canStartQuiz(); if(!check.allowed){setShowPricing(true);return;}
-    setLoading(true);setLoadError(null);setSelectedConcours(concours);setSessionData(prev=>({...prev,concours,mode}));
+    setLoading(true);setLoadError(null);setLoadMode(mode);
+    setSelectedConcours(concours);setSessionData(prev=>({...prev,concours,mode}));
     try{
       if(mode==="flashcards"){const data=await generateFlashcards(concours,theme);consumeQuizSlot();setSessionData({concours,mode:"flashcards",flashcards:data.flashcards});setScreen("flashcards");return;}
       let data;
@@ -91,14 +107,18 @@ export default function App() {
   const backToHome=()=>{setScreen("home");setSessionData(null);setLoadError(null);};
   const curiosityMsg=selectedConcours?getCuriosityMessage(appState,selectedConcours):null;
 
-  if(authLoading)return <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}><div className="spinner"/></div>;
+  if(showPremiumSuccess) return <PremiumSuccess userName={userName} onContinue={()=>{setShowPremiumSuccess(false);setScreen("home");}}/>;
+  if(authLoading) return <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}><div className="spinner"/></div>;
 
   if(screen==="landing")return(<><LandingPage onEnterApp={handleEnterApp} onShowAuth={()=>setShowAuth(true)} onShowPricing={()=>setShowPricing(true)}/>{showAuth&&<AuthModal onClose={()=>setShowAuth(false)} onSuccess={()=>{setShowAuth(false);handleEnterApp();}}/>}{showPricing&&<PricingModal onClose={()=>setShowPricing(false)} user={user} onShowAuth={()=>{setShowPricing(false);setShowAuth(true);}}/>}</>);
-  if(screen==="onboarding")return <OnboardingScreen onComplete={handleOnboardingComplete}/>;
-  if(loading)return <LoadingScreen mode={sessionData?.mode||"quiz"} concoursIcon={sessionData?.concours?CONCOURS[sessionData.concours]?.icon:"🩺"}/>;
-  if(screen==="quiz")return <QuizScreen questions={sessionData.questions} concours={sessionData.concours} isExam={sessionData.isExam} isExpress={sessionData.isExpress} examTimeLeft={sessionData.isExam?25*60:0} onAnswer={handleAnswer} onFinish={handleFinish} onBack={backToHome}/>;
-  if(screen==="result")return(<><ResultScreen score={sessionData.score} total={sessionData.total} answers={sessionData.answers} concours={sessionData.concours} isExam={sessionData.isExam} isExpress={sessionData.isExpress} userName={userName} onRestart={()=>handleStart({mode:sessionData.isExam?"exam":"quiz",concours:sessionData.concours,difficulty:2,theme:null})} onHome={backToHome}/>{surpriseReward&&<SurpriseReward reward={surpriseReward} onClose={()=>setSurpriseReward(null)}/>}</>);
-  if(screen==="flashcards")return <FlashcardsScreen flashcards={sessionData.flashcards} concours={sessionData.concours} onBack={backToHome}/>;
+  if(screen==="onboarding") return <OnboardingScreen onComplete={handleOnboardingComplete}/>;
+
+  // Loading enrichi avec questions animées
+  if(loading) return <LoadingQuiz mode={loadMode} concoursKey={sessionData?.concours||selectedConcours}/>;
+
+  if(screen==="quiz") return <QuizScreen questions={sessionData.questions} concours={sessionData.concours} isExam={sessionData.isExam} isExpress={sessionData.isExpress} examTimeLeft={sessionData.isExam?25*60:0} onAnswer={handleAnswer} onFinish={handleFinish} onBack={backToHome}/>;
+  if(screen==="result") return(<><ResultScreen score={sessionData.score} total={sessionData.total} answers={sessionData.answers} concours={sessionData.concours} isExam={sessionData.isExam} isExpress={sessionData.isExpress} userName={userName} onRestart={()=>handleStart({mode:sessionData.isExam?"exam":"quiz",concours:sessionData.concours,difficulty:2,theme:null})} onHome={backToHome}/>{surpriseReward&&<SurpriseReward reward={surpriseReward} onClose={()=>setSurpriseReward(null)}/>}</>);
+  if(screen==="flashcards") return <FlashcardsScreen flashcards={sessionData.flashcards} concours={sessionData.concours} onBack={backToHome}/>;
 
   const TABS=[{id:"quiz",icon:"🧠",label:"Quiz"},{id:"dashboard",icon:"📊",label:"Progrès"},{id:"badges",icon:"🏅",label:"Badges"},{id:"leaderboard",icon:"🏆",label:"Classement"}];
 
@@ -109,14 +129,26 @@ export default function App() {
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <LevelBadge points={points} level={level} compact/>
           <button onClick={()=>setDarkMode(d=>!d)} style={{background:"none",border:"1px solid var(--border)",borderRadius:8,padding:"5px 9px",cursor:"pointer",fontSize:"0.85rem"}}>{darkMode?"☀️":"🌙"}</button>
-          {user?(<div style={{display:"flex",alignItems:"center",gap:8}}>{isPremium&&<span style={{fontSize:"0.72rem",background:"#FFB80020",color:"#A07800",padding:"3px 8px",borderRadius:20,fontWeight:700,fontFamily:"var(--font-display)"}}>👑</span>}<button className="btn btn-ghost" onClick={logout} style={{padding:"7px 12px",fontSize:"0.82rem"}}>Déconnexion</button></div>)
-          :(<div style={{display:"flex",gap:8}}><button className="btn btn-ghost" onClick={()=>setShowAuth(true)} style={{padding:"7px 14px",fontSize:"0.84rem"}}>Connexion</button><button className="btn btn-teal" onClick={()=>setShowPricing(true)} style={{padding:"7px 14px",fontSize:"0.84rem"}}>Premium</button></div>)}
+          {user?(
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              {isPremium
+                ?<span style={{fontSize:"0.72rem",background:"#FFB80020",color:"#A07800",padding:"3px 8px",borderRadius:20,fontWeight:700,fontFamily:"var(--font-display)"}}>👑 Premium</span>
+                :<button className="btn btn-teal" onClick={()=>setShowPricing(true)} style={{padding:"6px 12px",fontSize:"0.78rem"}}>👑 Premium</button>
+              }
+              <button className="btn btn-ghost" onClick={logout} style={{padding:"7px 12px",fontSize:"0.82rem"}}>Déconnexion</button>
+            </div>
+          ):(
+            <div style={{display:"flex",gap:8}}>
+              <button className="btn btn-ghost" onClick={()=>setShowAuth(true)} style={{padding:"7px 14px",fontSize:"0.84rem"}}>Connexion</button>
+              <button className="btn btn-teal" onClick={()=>setShowPricing(true)} style={{padding:"7px 14px",fontSize:"0.84rem"}}>Premium</button>
+            </div>
+          )}
         </div>
       </div>
 
       <div style={{maxWidth:640,margin:"0 auto",padding:"24px 20px 100px"}}>
         {welcomeBack&&activeTab==="quiz"&&<WelcomeBack message={welcomeBack} onDismiss={()=>setWelcomeBack(null)}/>}
-        {challengeVisible&&activeTab==="quiz"&&challengeData.current&&<ChallengeBanner challenge={challengeData.current} onAccept={(k)=>{setChallengeVisible(false);window.history.replaceState({},""," /");handleStart({mode:"quiz",concours:k,difficulty:2,theme:null});}} onDismiss={()=>{setChallengeVisible(false);window.history.replaceState({},""," /");}}/>}
+        {challengeVisible&&activeTab==="quiz"&&challengeData.current&&<ChallengeBanner challenge={challengeData.current} onAccept={(k)=>{setChallengeVisible(false);window.history.replaceState({},"","/");handleStart({mode:"quiz",concours:k,difficulty:2,theme:null});}} onDismiss={()=>{setChallengeVisible(false);window.history.replaceState({},"","/");}}/>}
         {streakWarning&&activeTab==="quiz"&&<StreakWarning warning={streakWarning} onRevise={()=>setStreakWarning(null)} onDismiss={()=>setStreakWarning(null)}/>}
         {curiosityMsg&&activeTab==="quiz"&&<CuriosityHook message={curiosityMsg} onAction={()=>selectedConcours&&handleStart({mode:"errors",concours:selectedConcours,difficulty:2,theme:null})}/>}
         {loadError&&<div style={{background:"#FEE",border:"1px solid #FCC",borderRadius:10,padding:"11px 14px",color:"#C00",fontSize:"0.86rem",marginBottom:16}}>⚠️ {loadError}</div>}
