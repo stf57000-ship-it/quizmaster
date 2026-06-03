@@ -27,6 +27,23 @@ async function getRawBody(req) {
   });
 }
 
+async function sendPremiumEmail(email, name) {
+  try {
+    await fetch(`${process.env.VITE_APP_URL}/api/send-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": process.env.ADMIN_KEY
+      },
+      body: JSON.stringify({ type: "premium", to: email, data: { name: name || "toi" } })
+    });
+    console.log(`✅ Email Premium envoyé à ${email}`);
+  } catch (err) {
+    console.error("Email Premium error:", err.message);
+    // Non bloquant — on ne fail pas le webhook pour un email raté
+  }
+}
+
 async function setUserPremium(userId, customerId, subscriptionId) {
   console.log(`Setting premium for user: ${userId}`);
   
@@ -88,6 +105,10 @@ export default async function handler(req, res) {
       const userId = session.metadata?.user_id;
       if (userId) {
         await setUserPremium(userId, session.customer, session.subscription);
+        // Récupérer l'email depuis Stripe et envoyer l'email de bienvenue Premium
+        const customerEmail = session.customer_details?.email || session.customer_email;
+        const customerName  = session.customer_details?.name;
+        if (customerEmail) await sendPremiumEmail(customerEmail, customerName);
       } else {
         console.error("No user_id in session metadata!");
       }

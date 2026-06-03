@@ -27,7 +27,25 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
   const handleConfirmCancel = async () => {
     setLoading(true);
     try {
-      // Email de confirmation résiliation
+      // 1. Récupérer le token Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      // 2. Appeler l'endpoint de résiliation Stripe
+      const cancelRes = await fetch("/api/cancel-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!cancelRes.ok) {
+        const err = await cancelRes.json();
+        console.error("Erreur résiliation:", err);
+      }
+
+      // 3. Email de confirmation (non bloquant)
       await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,8 +55,12 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
           data: { name: firstName, reason }
         })
       });
+
       onCancel?.();
-    } catch {}
+    } catch (err) {
+      console.error("handleConfirmCancel error:", err);
+      onCancel?.(); // On laisse partir quand même
+    }
     setLoading(false);
   };
 
