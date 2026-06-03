@@ -47,10 +47,7 @@ export default async function handler(req, res) {
     if (!prompt || typeof prompt !== "string") return res.status(400).json({ error: "Prompt invalide" });
     if (prompt.length > 3000) return res.status(400).json({ error: "Prompt trop long" });
 
-    // 🔍 DEBUG — à supprimer après vérification
     const apiKey = process.env.OPENROUTER_API_KEY;
-    console.log("🔑 OPENROUTER_API_KEY présente ?", !!apiKey, "— longueur :", apiKey?.length ?? 0);
-
     const isPremium = await checkPremium(req.headers["authorization"]);
     const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
     if (!checkRateLimit(ip, isPremium)) {
