@@ -25,6 +25,7 @@ import { QuizScreen }       from "./screens/QuizScreen.jsx";
 import { ResultScreen, FlashcardsScreen } from "./screens/ResultScreen.jsx";
 import { DashboardScreen, BadgesScreen, LeaderboardScreen } from "./screens/DashboardScreen.jsx";
 import { PremiumSuccess }   from "./screens/PremiumSuccess.jsx";
+import { CancelScreen }    from "./screens/CancelScreen.jsx";
 
 const NOTIF_DISMISSED_KEY = "cs_notif_dismissed";
 const QUIZ_COUNT_KEY      = "cs_session_quiz_count";
@@ -56,6 +57,7 @@ export default function App() {
   const [selectedConcours, setSelectedConcours] = useState(null);
 
   // Notifications : afficher le bandeau après le 2ème quiz de la session
+  const [showCancel, setShowCancel] = useState(false);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
   const [sessionQuizCount, setSessionQuizCount] = useState(
     () => parseInt(localStorage.getItem(QUIZ_COUNT_KEY) || "0", 10)
@@ -188,6 +190,17 @@ export default function App() {
   const backToHome = () => { setScreen("home"); setSessionData(null); setLoadError(null); };
   const curiosityMsg = selectedConcours ? getCuriosityMessage(appState, selectedConcours) : null;
 
+  if (showCancel) return (
+    <CancelScreen
+      user={user}
+      userName={userName}
+      daysLeft={30}
+      onKeep={() => setShowCancel(false)}
+      onCancel={() => { setShowCancel(false); logout(); }}
+      onPause={() => { setShowCancel(false); }}
+    />
+  );
+
   if (showPremiumSuccess) return <PremiumSuccess userName={userName} onContinue={() => { setShowPremiumSuccess(false); setScreen("home"); }} />;
   if (authLoading) return <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}><div className="spinner" /></div>;
 
@@ -251,7 +264,7 @@ export default function App() {
           {user ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {isPremium
-                ? <span style={{ fontSize: "0.72rem", background: "#FFB80020", color: "#A07800", padding: "3px 8px", borderRadius: 20, fontWeight: 700, fontFamily: "var(--font-display)" }}>👑 Premium</span>
+                ? <span onClick={() => setShowCancel(true)} style={{ fontSize: "0.72rem", background: "#FFB80020", color: "#A07800", padding: "3px 8px", borderRadius: 20, fontWeight: 700, fontFamily: "var(--font-display)", cursor: "pointer" }}>👑 Premium</span>
                 : <button className="btn btn-teal" onClick={() => setShowPricing(true)} style={{ padding: "6px 12px", fontSize: "0.78rem" }}>👑 Premium</button>
               }
               <button className="btn btn-ghost" onClick={logout} style={{ padding: "7px 12px", fontSize: "0.82rem" }}>Déconnexion</button>
