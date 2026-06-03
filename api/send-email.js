@@ -3,6 +3,11 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = "ConcoursSanté <noreply@concourssante.fr>";
 
+// Validation email basique
+function isValidEmail(email) {
+  return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length < 200;
+}
+
 const templates = {
   welcome: ({ name }) => ({
     subject: "Bienvenue sur ConcoursSanté 🎉",
@@ -10,11 +15,11 @@ const templates = {
   }),
   premium: ({ name }) => ({
     subject: "Tu es Premium sur ConcoursSanté ⭐",
-    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px"><div style="text-align:center;margin-bottom:32px"><div style="font-size:48px">⭐</div><h1 style="font-size:24px;font-weight:900;color:#0A2342">Bienvenue dans Premium !</h1></div><p style="color:#445566;font-size:16px;line-height:1.6">Bonjour <strong>${name}</strong>, ton abonnement Premium est actif. Tu as maintenant accès à :</p><ul style="color:#445566;font-size:15px;line-height:2"><li>✅ Quiz IA illimités</li><li>✅ Les 14 concours disponibles</li><li>✅ Toutes les difficultés</li><li>✅ Mode examen blanc complet</li></ul><p style="color:#445566;font-size:14px;margin-top:24px">Pour gérer ou résilier ton abonnement, rends-toi dans <strong>Mon compte → Abonnement</strong> depuis le site.</p><div style="text-align:center;margin:32px 0"><a href="https://concourssante.fr" style="background:#1DB8A4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:800">Accéder à mon espace →</a></div><p style="color:#aab;font-size:12px;text-align:center">ConcoursSanté · Tu reçois cet email car tu viens de souscrire un abonnement.</p></div>`
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px"><div style="text-align:center;margin-bottom:32px"><div style="font-size:48px">⭐</div><h1 style="font-size:24px;font-weight:900;color:#0A2342">Bienvenue dans Premium !</h1></div><p style="color:#445566;font-size:16px;line-height:1.6">Bonjour <strong>${name}</strong>, ton abonnement Premium est actif.</p><ul style="color:#445566;font-size:15px;line-height:2"><li>✅ Quiz IA illimités</li><li>✅ Les 14 concours disponibles</li><li>✅ Toutes les difficultés</li><li>✅ Mode examen blanc complet</li></ul><p style="color:#445566;font-size:14px;margin-top:24px">Pour gérer ou résilier ton abonnement, rends-toi dans <strong>Mon compte → Abonnement</strong>.</p><div style="text-align:center;margin:32px 0"><a href="https://concourssante.fr" style="background:#1DB8A4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:800">Accéder à mon espace →</a></div><p style="color:#aab;font-size:12px;text-align:center">ConcoursSanté · Tu reçois cet email car tu viens de souscrire un abonnement.</p></div>`
   }),
-  cancellation: ({ name, reason }) => ({
+  cancellation: ({ name }) => ({
     subject: "Résiliation confirmée — À bientôt 👋",
-    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px"><div style="text-align:center;margin-bottom:32px"><div style="font-size:48px">👋</div><h1 style="font-size:24px;font-weight:900;color:#0A2342">Résiliation confirmée</h1></div><p style="color:#445566;font-size:16px;line-height:1.6">Bonjour <strong>${name}</strong>,</p><p style="color:#445566;font-size:15px;line-height:1.6">Ta résiliation a bien été prise en compte. Ton accès Premium reste actif jusqu'à la fin de ta période en cours — aucun frais supplémentaire ne sera débité.</p><div style="background:#f7f9fc;border-radius:12px;padding:20px;margin:24px 0"><div style="font-size:14px;color:#445566;line-height:1.8">✓ Résiliation confirmée<br/>✓ Accès maintenu jusqu'à fin de période<br/>✓ Aucun frais supplémentaire<br/>✓ Réabonnement possible à tout moment</div></div><p style="color:#445566;font-size:14px;line-height:1.6">Si tu repasses un concours à l'avenir ou si tu veux reprendre ta préparation, tu seras toujours le/la bienvenu(e).</p><div style="text-align:center;margin:32px 0"><a href="https://concourssante.fr" style="background:#1DB8A4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:800">Revenir sur ConcoursSanté</a></div><p style="color:#aab;font-size:12px;text-align:center">ConcoursSanté · Bonne chance pour la suite 🍀</p></div>`
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px"><div style="text-align:center;margin-bottom:32px"><div style="font-size:48px">👋</div><h1 style="font-size:24px;font-weight:900;color:#0A2342">Résiliation confirmée</h1></div><p style="color:#445566;font-size:16px;line-height:1.6">Bonjour <strong>${name}</strong>,</p><p style="color:#445566;font-size:15px;line-height:1.6">Ta résiliation a bien été prise en compte. Ton accès Premium reste actif jusqu'à la fin de ta période en cours.</p><div style="background:#f7f9fc;border-radius:12px;padding:20px;margin:24px 0"><div style="font-size:14px;color:#445566;line-height:1.8">✓ Résiliation confirmée<br/>✓ Accès maintenu jusqu'à fin de période<br/>✓ Aucun frais supplémentaire<br/>✓ Réabonnement possible à tout moment</div></div><div style="text-align:center;margin:32px 0"><a href="https://concourssante.fr" style="background:#1DB8A4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:800">Revenir sur ConcoursSanté</a></div><p style="color:#aab;font-size:12px;text-align:center">ConcoursSanté · Bonne chance pour la suite 🍀</p></div>`
   }),
   inactivity: ({ name, daysSince }) => ({
     subject: `${name}, tu n'as pas révisé depuis ${daysSince} jours 👀`,
@@ -27,16 +32,21 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).end();
 
-  // Sécurisation : clé secrète obligatoire sauf pour la résiliation (appelée côté client)
-  const adminKey = req.headers["x-admin-key"];
-  const isPublicType = type === "cancellation";
-  if (!isPublicType && (!adminKey || adminKey !== process.env.ADMIN_KEY)) {
-    return res.status(401).json({ error: "Non autorisé" });
-  }
-
   const { type, to, data } = req.body;
+
+  // Validation du type et du destinataire AVANT la vérification de la clé
   if (!type || !to || !templates[type]) {
     return res.status(400).json({ error: "type ou destinataire manquant" });
+  }
+  if (!isValidEmail(to)) {
+    return res.status(400).json({ error: "Email destinataire invalide" });
+  }
+
+  // Sécurisation : clé secrète obligatoire sauf pour la résiliation (appelée côté client)
+  const isPublicType = type === "cancellation";
+  const adminKey = req.headers["x-admin-key"];
+  if (!isPublicType && (!adminKey || adminKey !== process.env.ADMIN_KEY)) {
+    return res.status(401).json({ error: "Non autorisé" });
   }
 
   try {
