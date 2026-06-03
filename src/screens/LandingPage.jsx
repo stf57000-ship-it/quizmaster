@@ -22,8 +22,8 @@ export function LandingPage({ onEnterApp, onShowAuth, onShowPricing }) {
 
   const faqs=[
     {q:"C'est vraiment gratuit ?",a:"Oui, 3 quiz par jour sans carte bancaire. Premium débloque un accès illimité à 9€/mois sans engagement."},
-    {q:"Les questions sont fiables ?",a:"Les questions sont générées par Claude Sonnet 4, un des meilleurs modèles IA du monde, spécialisé pour les concours français."},
-    {q:"Comment annuler Premium ?",a:"En un clic depuis ton profil, à tout moment. Pas d'engagement, pas de frais cachés."},
+    {q:"Les questions sont fiables ?",a:"Les questions sont générées par Claude Haiku, un des meilleurs modèles IA du monde, spécialisé pour les concours français."},
+    {q:"Comment annuler Premium ?",a:"En un clic depuis ton profil onglet Progrès, à tout moment. Pas d'engagement, pas de frais cachés."},
     {q:"Fonctionne sur mobile ?",a:"Oui, le site est optimisé mobile. Une app Android arrive prochainement."},
   ];
 
@@ -121,7 +121,13 @@ export function LandingPage({ onEnterApp, onShowAuth, onShowPricing }) {
 
       <footer style={{background:"var(--surface)",borderTop:"1px solid var(--border)",padding:"24px",textAlign:"center"}}>
         <div style={{fontFamily:"var(--font-display)",fontWeight:800,color:"var(--text)",marginBottom:8}}>🩺 ConcoursSanté</div>
-        <div style={{fontSize:"0.78rem",color:"var(--muted)"}}>concourssante.fr · Quiz IA pour concours professionnels · {new Date().getFullYear()}</div>
+        <div style={{fontSize:"0.78rem",color:"var(--muted)",marginBottom:8}}>concourssante.fr · Quiz IA pour concours professionnels · {new Date().getFullYear()}</div>
+        <div style={{display:"flex",justifyContent:"center",gap:20,fontSize:"0.78rem"}}>
+          <a href="/mentions-legales.html" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>Mentions légales</a>
+          <a href="/cgv.html" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>CGV</a>
+          <a href="/politique-confidentialite.html" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>Confidentialité</a>
+          <a href="mailto:contact@concourssante.fr" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>Contact</a>
+        </div>
       </footer>
     </div>
   );
