@@ -28,7 +28,7 @@ async function generateBatch(concours, difficulty) {
   const diff = difficulty===1?"débutant":difficulty===2?"intermédiaire":"expert";
   const label = CONCOURS_LABELS[concours];
 
-  const prompt = `Expert concours paramédicaux français. Génère 20 QCM VARIÉS et ORIGINAUX pour "${label}", niveau ${diff}. Questions sur des aspects précis et peu connus du programme.
+  const prompt = `Expert concours paramédicaux français. Génère 10 QCM VARIÉS et ORIGINAUX pour "${label}", niveau ${diff}. Questions sur des aspects précis et peu connus du programme.
 JSON uniquement: {"questions":[{"q":"...","options":["A","B","C","D"],"answer":0,"explanation":"...","theme":"..."}]}`;
 
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
