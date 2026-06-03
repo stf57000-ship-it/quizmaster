@@ -4,6 +4,26 @@ import { loadLocal, saveLocal, checkNewBadges, getDailyQuizCount, incrementDaily
 import { saveProgress, loadProgress } from "../lib/supabase.js";
 import { FREE_DAILY_LIMIT } from "../lib/constants.js";
 
+function mostRecent(a, b) {
+  if (!a) return b; if (!b) return a;
+  return new Date(a) >= new Date(b) ? a : b;
+}
+
+function mergeErrors(localErrors = {}, cloudErrors = {}) {
+  const result = { ...cloudErrors };
+  for (const [concours, errs] of Object.entries(localErrors)) {
+    const existing = result[concours] || [];
+    const ids = new Set(existing.map(e => e.q || e.question));
+    result[concours] = [...existing, ...errs.filter(e => !ids.has(e.q || e.question))];
+  }
+  return result;
+}
+
+function mergeHistory(localHistory = [], cloudHistory = []) {
+  const seen = new Set(cloudHistory.map(h => `${h.date}-${h.concours}`));
+  return [...cloudHistory, ...localHistory.filter(h => !seen.has(`${h.date}-${h.concours}`))];
+}
+
 export function useProgress(user, isPremium) {
   const [state, setState] = useState(() => loadLocal());
   const [newBadge, setNewBadge]     = useState(null);
@@ -14,7 +34,33 @@ export function useProgress(user, isPremium) {
 
   useEffect(() => {
     if (!user) return;
-    loadProgress(user.id).then(cloud => { if (cloud) { setState(prev => ({ ...prev, ...cloud })); setSyncStatus("synced"); } });
+    loadProgress(user.id).then(cloud => {
+      setState(prev => {
+        // Fusion intelligente : on garde le meilleur des deux
+        const local = prev;
+        const base  = cloud || {};
+
+        return {
+          ...base,
+          ...local,
+          // Points : max
+          points: Math.max(local.points || 0, base.points || 0),
+          // Streak : max
+          streak: Math.max(local.streak || 0, base.streak || 0),
+          // Badges : union des deux listes
+          earnedBadges: [...new Set([...(local.earnedBadges || []), ...(base.earnedBadges || [])])],
+          // Erreurs : fusion par concours
+          errors: mergeErrors(local.errors, base.errors),
+          // Historique : union sans doublons (par date+concours)
+          quizHistory: mergeHistory(local.quizHistory, base.quizHistory),
+          // Concours joués : union
+          concoursPlayed: { ...(base.concoursPlayed || {}), ...(local.concoursPlayed || {}) },
+          // lastDay : le plus récent
+          lastDay: mostRecent(local.lastDay, base.lastDay),
+        };
+      });
+      setSyncStatus("synced");
+    });
   }, [user]);
 
   useEffect(() => {
