@@ -7,6 +7,17 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// Liste blanche des concours autorisés
+const ALLOWED_CONCOURS = new Set([
+  "infirmier", "aidesoignant", "auxiliaire", "ambulancier", "atsem",
+  "sapeurpompier", "policemunicipal", "gardedeprison", "surveillant",
+  "agentdesecurite", "ssiap", "bpjeps", "crfpe", "moniteuresclade",
+  "educateurspecialise"
+]);
+
+// Liste blanche des modes autorisés
+const ALLOWED_MODES = new Set(["quiz", "exam", "express", "errors", "flashcards"]);
+
 const rateLimitMap = new Map();
 function checkRateLimit(ip, isPremium) {
   if (isPremium) return true;
@@ -35,6 +46,29 @@ async function checkPremium(authHeader) {
   } catch { return false; }
 }
 
+function validatePrompt(prompt) {
+  if (!prompt || typeof prompt !== "string") return { valid: false, reason: "Prompt invalide" };
+  if (prompt.length > 3000) return { valid: false, reason: "Prompt trop long" };
+
+  // Détection d'injection de prompt basique
+  const forbidden = [
+    "ignore previous instructions",
+    "ignore les instructions",
+    "oublie tes instructions",
+    "system prompt",
+    "jailbreak",
+    "act as",
+    "tu es maintenant",
+    "you are now",
+  ];
+  const lower = prompt.toLowerCase();
+  for (const f of forbidden) {
+    if (lower.includes(f)) return { valid: false, reason: "Contenu non autorisé" };
+  }
+
+  return { valid: true };
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.VITE_APP_URL || "https://concourssante.fr");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -43,13 +77,25 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
-    const { prompt } = req.body;
-    if (!prompt || typeof prompt !== "string") return res.status(400).json({ error: "Prompt invalide" });
-    if (prompt.length > 3000) return res.status(400).json({ error: "Prompt trop long" });
+    const { prompt, concours, mode } = req.body;
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    // Validation du prompt
+    const check = validatePrompt(prompt);
+    if (!check.valid) return res.status(400).json({ error: check.reason });
+
+    // Validation liste blanche concours
+    if (concours && !ALLOWED_CONCOURS.has(concours)) {
+      return res.status(400).json({ error: "Concours non reconnu" });
+    }
+
+    // Validation liste blanche mode
+    if (mode && !ALLOWED_MODES.has(mode)) {
+      return res.status(400).json({ error: "Mode non reconnu" });
+    }
+
     const isPremium = await checkPremium(req.headers["authorization"]);
     const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress || "unknown";
+
     if (!checkRateLimit(ip, isPremium)) {
       return res.status(429).json({
         error: "Limite quotidienne atteinte",
@@ -58,6 +104,7 @@ export default async function handler(req, res) {
       });
     }
 
+    const apiKey = process.env.OPENROUTER_API_KEY;
     const response = await fetch(OPENROUTER_API, {
       method: "POST",
       headers: {
