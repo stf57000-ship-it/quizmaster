@@ -55,22 +55,16 @@ async function getFromBank(concours, difficulty, theme, count = 10, userId = nul
   try {
     const seenIds = await getSeenQuestionIds(userId, concours);
 
-    // Essayer la difficulté demandée, puis fallback vers difficulté 2
-    const difficultiesToTry = difficulty === 2 ? [2] : [difficulty, 2];
-    let data = null;
+    let query = supabase
+      .from("question_bank")
+      .select("id,question,options,answer,explanation,theme")
+      .eq("concours", concours)
+      .eq("difficulty", difficulty)
+      .limit(count * 3); // Prendre plus pour avoir le choix
 
-    for (const diff of difficultiesToTry) {
-      let query = supabase
-        .from("question_bank")
-        .select("id,question,options,answer,explanation,theme")
-        .eq("concours", concours)
-        .eq("difficulty", diff)
-        .limit(count * 3);
-      if (theme) query = query.eq("theme", theme);
-      const { data: result } = await query;
-      if (result && result.length >= count) { data = result; break; }
-    }
+    if (theme) query = query.eq("theme", theme);
 
+    const { data } = await query;
     if (!data || data.length < count) return null;
 
     // Filtrer les questions déjà vues
@@ -103,38 +97,13 @@ async function getFromBank(concours, difficulty, theme, count = 10, userId = nul
 
 // ── Appel IA (fallback si banque vide) ────────────────────────
 
-async function callProxy(prompt) {
-  if (IS_DEV) {
-    return callWithRetry(async () => {
-      const res = await fetch(OPENROUTER_URL, {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "Authorization":`Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-          "HTTP-Referer":"https://concourssante.fr",
-          "X-Title":"ConcoursSanté"
-        },
-        body: JSON.stringify({
-          model:"anthropic/claude-haiku-4-5",
-          messages:[{role:"user",content:prompt}],
-          max_tokens:3000
-        })
-      });
-      if (!res.ok) throw new Error(`OpenRouter ${res.status}`);
-      const text = await res.text();
-      const data = JSON.parse(text);
-      const content = data.choices?.[0]?.message?.content;
-      if (!content) throw new Error("Contenu vide");
-      return parseJSON(content);
-    });
-  }
-
+async function callProxy(params) {
   const authHeader = await getAuthHeader();
   const headers = { "Content-Type":"application/json" };
   if (authHeader) headers["Authorization"] = authHeader;
 
   return callWithRetry(async () => {
-    const res = await fetch(PROXY_URL, { method:"POST", headers, body:JSON.stringify({prompt}) });
+    const res = await fetch(PROXY_URL, { method:"POST", headers, body:JSON.stringify(params) });
     if (res.status === 429) {
       const d = await res.json();
       const e = new Error(d.message||"Limite atteinte");
@@ -145,9 +114,13 @@ async function callProxy(prompt) {
       const d = await res.json().catch(()=>({}));
       throw new Error(d.error||"Erreur IA. Réessayez.");
     }
-    const text = await res.text();
-    const data = JSON.parse(text);
-    return parseJSON(data.content);
+    const data = await res.json();
+    // Le serveur retourne maintenant du JSON propre directement
+    if (data.questions) return data;
+    if (data.flashcards) return data;
+    // Fallback si contenu brut
+    if (data.content) return parseJSON(data.content);
+    throw new Error("Réponse invalide");
   });
 }
 
@@ -160,34 +133,16 @@ export async function generateQuiz(concours, difficulty, theme, errorMode=false,
     if (banked) return banked;
   }
 
-  // 2. Fallback : génération IA
-  // Fallback difficulté : si 1 ou 3 non disponible en banque, adapter le prompt
-  const diffLabel = difficulty===1?"débutant (questions simples, vocabulaire de base)":difficulty===2?"intermédiaire":"expert (questions pointues, cas cliniques complexes)";
-  const diff = diffLabel;
-  const themeText = theme
-    ? `Thème : "${theme}".`
-    : `Varie les thèmes parmi : ${CONCOURS[concours].themes.join(", ")}.`;
-
-  let prompt;
-  if (errorMode && errorQuestions.length) {
-    const sample = errorQuestions.slice(-5).map(e=>e.q).join("\n- ");
-    prompt = `Expert concours paramédicaux. L'étudiant a raté :\n- ${sample}\nGénère 10 QCM DIFFÉRENTS pour "${CONCOURS[concours].label}" niveau ${diff}. Questions originales, pas de répétition.\nJSON uniquement: {"questions":[{"q":"...","options":["A","B","C","D"],"answer":0,"explanation":"...","theme":"..."}]}`;
-  } else {
-    prompt = `Expert concours paramédicaux français. Génère 10 QCM ORIGINAUX et VARIÉS pour "${CONCOURS[concours].label}", niveau ${diff}. ${themeText} Questions précises sur des aspects peu connus du programme.\nJSON uniquement: {"questions":[{"q":"...","options":["A","B","C","D"],"answer":0,"explanation":"...","theme":"..."}]}`;
-  }
-  return callProxy(prompt);
+  // 2. Fallback : génération IA — on envoie des paramètres, pas un prompt libre
+  return callProxy({ concours, mode: errorMode ? "errors" : "quiz", difficulty, theme, errorQuestions: errorMode ? errorQuestions : undefined });
 }
 
 export async function generateExamBlanc(concours, userId=null) {
-  // Examen blanc : toujours IA pour garantir 20 questions cohérentes
-  const prompt = `Expert concours paramédicaux. Examen blanc 20 QCM VARIÉS pour "${CONCOURS[concours].label}", niveau difficile, tous thèmes couverts.\nJSON uniquement: {"questions":[{"q":"...","options":["A","B","C","D"],"answer":0,"explanation":"...","theme":"..."}]}`;
-  return callProxy(prompt);
+  return callProxy({ concours, mode: "exam", difficulty: 2, theme: null });
 }
 
 export async function generateFlashcards(concours, theme) {
-  const t = theme || CONCOURS[concours].themes[0];
-  const prompt = `Expert concours paramédicaux. 8 flashcards ORIGINALES pour "${CONCOURS[concours].label}" sur "${t}".\nJSON uniquement: {"flashcards":[{"question":"...","answer":"...","theme":"..."}]}`;
-  return callProxy(prompt);
+  return callProxy({ concours, mode: "flashcards", difficulty: 2, theme: theme || null });
 }
 
 // ── Préchargement intelligent ─────────────────────────────────
