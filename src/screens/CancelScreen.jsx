@@ -11,49 +11,59 @@ const CANCEL_REASONS = [
 ];
 
 export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPause }) {
-  const [step, setStep]     = useState(1); // 1=raison, 2=offre, 3=confirmation
-  const [reason, setReason] = useState(null);
+  const [step, setStep]       = useState(1);
+  const [reason, setReason]   = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState(null);
 
   const firstName = userName?.split(" ")[0] || "toi";
 
+  const getToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token;
+  };
+
   const handleSelectReason = (r) => {
     setReason(r);
-    // Si le concours est passé → pas d'offre de pause, juste confirmer
     if (r === "concours") setStep(3);
     else setStep(2);
   };
 
+  const handlePause = async (type) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/cancel-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Erreur résiliation");
+      onPause?.(type);
+    } catch (err) {
+      setError("Une erreur est survenue. Réessaie ou contacte le support.");
+    }
+    setLoading(false);
+  };
+
   const handleConfirmCancel = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // 1. Récupérer le token Supabase
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
+      const token = await getToken();
 
-      // 2. Appeler l'endpoint de résiliation Stripe
+      // 1. Annuler Stripe
       const cancelRes = await fetch("/api/cancel-subscription", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
       });
+      if (!cancelRes.ok) console.error("Erreur résiliation Stripe");
 
-      if (!cancelRes.ok) {
-        const err = await cancelRes.json();
-        console.error("Erreur résiliation:", err);
-      }
-
-      // 3. Email de confirmation (non bloquant)
+      // 2. Email de confirmation (non bloquant)
       await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "cancellation",
-          to: user.email,
-          data: { name: firstName, reason }
-        })
+        body: JSON.stringify({ type: "cancellation", to: user.email, data: { name: firstName, reason } })
       });
 
       onCancel?.();
@@ -73,6 +83,12 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
 
       <div style={{ maxWidth:480, margin:"0 auto", padding:"32px 24px", width:"100%" }}>
 
+        {error && (
+          <div style={{ background:"#FEE", border:"1px solid #FCC", borderRadius:10, padding:"10px 14px", color:"#C00", fontSize:"0.85rem", marginBottom:16 }}>
+            ⚠️ {error}
+          </div>
+        )}
+
         {/* ÉTAPE 1 — Pourquoi tu pars ? */}
         {step === 1 && (
           <div className="fade-up">
@@ -83,19 +99,17 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
             <div style={{ color:"var(--muted)", fontSize:"0.88rem", textAlign:"center", marginBottom:28 }}>
               Pour améliorer ConcoursSanté, dis-nous pourquoi.
             </div>
-
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {CANCEL_REASONS.map(r => (
                 <button key={r.id} onClick={() => handleSelectReason(r.id)}
                   style={{ background:"var(--surface)", border:"1.5px solid var(--border)", borderRadius:14, padding:"16px 20px", cursor:"pointer", textAlign:"left", fontFamily:"var(--font-body)", fontSize:"0.9rem", color:"var(--text)", transition:"all 0.2s", display:"flex", justifyContent:"space-between", alignItems:"center" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--teal)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}>
+                  onMouseEnter={e => e.currentTarget.style.borderColor="var(--teal)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="var(--border)"}>
                   {r.label}
                   <span style={{ color:"var(--muted)" }}>→</span>
                 </button>
               ))}
             </div>
-
             <button onClick={onKeep} style={{ width:"100%", marginTop:20, background:"none", border:"none", cursor:"pointer", color:"var(--teal)", fontFamily:"var(--font-display)", fontWeight:700, fontSize:"0.88rem", padding:"12px" }}>
               ← Finalement je reste !
             </button>
@@ -119,9 +133,9 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
                   <div style={{ fontFamily:"var(--font-display)", fontWeight:900, fontSize:"1.1rem", color:"var(--teal)", marginBottom:4 }}>🎁 1 mois offert</div>
                   <div style={{ fontSize:"0.82rem", color:"var(--muted)" }}>Aucun débit pendant 30 jours · Résiliable à tout moment</div>
                 </div>
-                <button className="btn btn-teal" onClick={() => onPause?.("30days")}
+                <button className="btn btn-teal" onClick={() => handlePause("30days")} disabled={loading}
                   style={{ width:"100%", justifyContent:"center", padding:"14px", marginBottom:12 }}>
-                  ✨ J'accepte le mois offert
+                  {loading ? "..." : "✨ J'accepte le mois offert"}
                 </button>
               </div>
             )}
@@ -135,9 +149,9 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
                   <div style={{ fontFamily:"var(--font-display)", fontWeight:900, fontSize:"1.1rem", color:"var(--teal)", marginBottom:4 }}>⏸️ Pause 30 jours</div>
                   <div style={{ fontSize:"0.82rem", color:"var(--muted)" }}>Ton accès reste actif · Aucun débit · Reprends quand tu veux</div>
                 </div>
-                <button className="btn btn-teal" onClick={() => onPause?.("pause")}
+                <button className="btn btn-teal" onClick={() => handlePause("pause")} disabled={loading}
                   style={{ width:"100%", justifyContent:"center", padding:"14px", marginBottom:12 }}>
-                  ⏸️ Mettre en pause
+                  {loading ? "..." : "⏸️ Mettre en pause"}
                 </button>
               </div>
             )}
@@ -159,7 +173,6 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
               style={{ width:"100%", background:"none", border:"none", cursor:"pointer", color:"var(--muted)", fontFamily:"var(--font-body)", fontSize:"0.82rem", padding:"10px" }}>
               Non merci, je veux quand même résilier
             </button>
-
             <button onClick={onKeep}
               style={{ width:"100%", background:"none", border:"none", cursor:"pointer", color:"var(--teal)", fontFamily:"var(--font-display)", fontWeight:700, fontSize:"0.88rem", padding:"8px" }}>
               ← Finalement je reste !
@@ -178,11 +191,9 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
             </div>
             <div style={{ color:"var(--muted)", fontSize:"0.85rem", textAlign:"center", marginBottom:28, lineHeight:1.6 }}>
               {reason === "concours"
-                ? `${firstName}, tu as travaillé dur. On espère de tout cœur que tu vas réussir ! Reviens nous dire si ça s'est bien passé. 🍀`
-                : `Ton accès Premium reste actif jusqu'à la fin de la période en cours. Tu pourras te réabonner à tout moment.`
-              }
+                ? `${firstName}, tu as travaillé dur. On espère de tout cœur que tu vas réussir ! 🍀`
+                : `Ton accès Premium reste actif jusqu'à la fin de la période en cours.`}
             </div>
-
             <div style={{ background:"rgba(10,35,66,0.04)", border:"1px solid var(--border)", borderRadius:14, padding:"16px 20px", marginBottom:24 }}>
               <div style={{ fontFamily:"var(--font-display)", fontWeight:700, fontSize:"0.82rem", color:"var(--text)", marginBottom:8 }}>Récap résiliation</div>
               <div style={{ fontSize:"0.82rem", color:"var(--muted)", lineHeight:1.8 }}>
@@ -192,12 +203,10 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
                 ✓ Réabonnement possible à tout moment
               </div>
             </div>
-
             <button className="btn" onClick={handleConfirmCancel} disabled={loading}
               style={{ width:"100%", justifyContent:"center", padding:"14px", background:"rgba(255,107,53,0.08)", color:"var(--orange)", border:"2px solid rgba(255,107,53,0.2)", marginBottom:12 }}>
               {loading ? "..." : "Confirmer la résiliation"}
             </button>
-
             <button onClick={onKeep}
               style={{ width:"100%", background:"none", border:"none", cursor:"pointer", color:"var(--teal)", fontFamily:"var(--font-display)", fontWeight:700, fontSize:"0.9rem", padding:"12px" }}>
               ← Finalement je reste !

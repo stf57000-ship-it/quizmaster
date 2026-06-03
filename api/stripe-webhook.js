@@ -1,19 +1,12 @@
-// api/stripe-webhook.js — Version corrigée avec meilleure gestion des erreurs
+// api/stripe-webhook.js
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// IMPORTANT : utiliser createClient avec serviceRoleKey pour bypasser RLS
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
+  { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
 export const config = { api: { bodyParser: false } };
@@ -31,81 +24,59 @@ async function sendPremiumEmail(email, name) {
   try {
     await fetch(`${process.env.VITE_APP_URL}/api/send-email`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-key": process.env.ADMIN_KEY
-      },
+      headers: { "Content-Type": "application/json", "x-admin-key": process.env.ADMIN_KEY },
       body: JSON.stringify({ type: "premium", to: email, data: { name: name || "toi" } })
     });
     console.log(`✅ Email Premium envoyé à ${email}`);
   } catch (err) {
     console.error("Email Premium error:", err.message);
-    // Non bloquant — on ne fail pas le webhook pour un email raté
   }
 }
 
-async function setUserPremium(userId, customerId, subscriptionId) {
+async function setUserPremium(userId, customerId, subscriptionId, periodEnd) {
   console.log(`Setting premium for user: ${userId}`);
-  
-  const { data, error } = await supabase
-    .from("user_subscriptions")
-    .upsert({
-      user_id: userId,
-      stripe_customer_id: customerId,
-      stripe_subscription_id: subscriptionId,
-      status: "active",
-      plan: "premium",
-      updated_at: new Date().toISOString()
-    }, { 
-      onConflict: "user_id",
-      ignoreDuplicates: false 
-    });
-
-  if (error) {
-    console.error("Supabase upsert error:", JSON.stringify(error));
-    throw error;
-  }
-
+  const { error } = await supabase.from("user_subscriptions").upsert({
+    user_id:                userId,
+    stripe_customer_id:     customerId,
+    stripe_subscription_id: subscriptionId,
+    status:                 "active",
+    plan:                   "premium",
+    current_period_end:     periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+    updated_at:             new Date().toISOString()
+  }, { onConflict: "user_id", ignoreDuplicates: false });
+  if (error) { console.error("Supabase upsert error:", JSON.stringify(error)); throw error; }
   console.log(`✅ Premium set for user ${userId}`);
-  return data;
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).end("Method Not Allowed");
-  }
+  if (req.method !== "POST") return res.status(405).end("Method Not Allowed");
 
   let rawBody;
-  try {
-    rawBody = await getRawBody(req);
-  } catch (err) {
-    console.error("getRawBody error:", err);
-    return res.status(400).json({ error: "Could not read body" });
-  }
+  try { rawBody = await getRawBody(req); }
+  catch (err) { console.error("getRawBody error:", err); return res.status(400).json({ error: "Could not read body" }); }
 
   const sig = req.headers["stripe-signature"];
-  if (!sig) {
-    return res.status(400).json({ error: "Missing stripe-signature" });
-  }
+  if (!sig) return res.status(400).json({ error: "Missing stripe-signature" });
 
   let event;
-  try {
-    event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    console.error("Webhook signature error:", err.message);
-    return res.status(400).json({ error: `Webhook Error: ${err.message}` });
-  }
+  try { event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET); }
+  catch (err) { console.error("Webhook signature error:", err.message); return res.status(400).json({ error: `Webhook Error: ${err.message}` }); }
 
   console.log(`Event: ${event.type}`);
 
   try {
+    // ── Paiement initial checkout ──────────────────────────────
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      console.log("Session metadata:", JSON.stringify(session.metadata));
-      const userId = session.metadata?.user_id;
+      const userId  = session.metadata?.user_id;
       if (userId) {
-        await setUserPremium(userId, session.customer, session.subscription);
-        // Récupérer l'email depuis Stripe et envoyer l'email de bienvenue Premium
+        // Récupérer les détails de l'abonnement pour avoir current_period_end
+        let periodEnd = null;
+        if (session.subscription) {
+          const sub = await stripe.subscriptions.retrieve(session.subscription);
+          periodEnd = sub.current_period_end;
+        }
+        await setUserPremium(userId, session.customer, session.subscription, periodEnd);
         const customerEmail = session.customer_details?.email || session.customer_email;
         const customerName  = session.customer_details?.name;
         if (customerEmail) await sendPremiumEmail(customerEmail, customerName);
@@ -114,26 +85,35 @@ export default async function handler(req, res) {
       }
     }
 
+    // ── Renouvellement mensuel ─────────────────────────────────
     if (event.type === "invoice.payment_succeeded") {
       const invoice = event.data.object;
-      // Chercher user_id dans les métadonnées de la ligne de facture
-      const lineItem = invoice.lines?.data?.[0];
-      const userId = lineItem?.metadata?.user_id || invoice.parent?.subscription_details?.metadata?.user_id;
-      console.log("Invoice user_id:", userId);
-      if (userId) {
-        await supabase.from("user_subscriptions")
-          .update({ status: "active", updated_at: new Date().toISOString() })
-          .eq("user_id", userId);
+      // Récupérer user_id depuis les métadonnées de l'abonnement Stripe
+      let userId = null;
+      if (invoice.subscription) {
+        const sub = await stripe.subscriptions.retrieve(invoice.subscription);
+        userId = sub.metadata?.user_id;
+        if (userId) {
+          await supabase.from("user_subscriptions").update({
+            status:             "active",
+            current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+            updated_at:         new Date().toISOString()
+          }).eq("user_id", userId);
+          console.log(`✅ Renouvellement enregistré pour user ${userId}, fin: ${new Date(sub.current_period_end * 1000).toISOString()}`);
+        }
       }
     }
 
+    // ── Résiliation ────────────────────────────────────────────
     if (event.type === "customer.subscription.deleted") {
-      const sub = event.data.object;
+      const sub    = event.data.object;
       const userId = sub.metadata?.user_id;
       if (userId) {
-        await supabase.from("user_subscriptions")
-          .update({ status: "canceled", updated_at: new Date().toISOString() })
-          .eq("user_id", userId);
+        await supabase.from("user_subscriptions").update({
+          status:     "canceled",
+          updated_at: new Date().toISOString()
+        }).eq("user_id", userId);
+        console.log(`✅ Abonnement annulé pour user ${userId}`);
       }
     }
 
