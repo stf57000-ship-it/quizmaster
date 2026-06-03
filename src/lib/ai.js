@@ -55,16 +55,22 @@ async function getFromBank(concours, difficulty, theme, count = 10, userId = nul
   try {
     const seenIds = await getSeenQuestionIds(userId, concours);
 
-    let query = supabase
-      .from("question_bank")
-      .select("id,question,options,answer,explanation,theme")
-      .eq("concours", concours)
-      .eq("difficulty", difficulty)
-      .limit(count * 3); // Prendre plus pour avoir le choix
+    // Essayer la difficulté demandée, puis fallback vers difficulté 2
+    const difficultiesToTry = difficulty === 2 ? [2] : [difficulty, 2];
+    let data = null;
 
-    if (theme) query = query.eq("theme", theme);
+    for (const diff of difficultiesToTry) {
+      let query = supabase
+        .from("question_bank")
+        .select("id,question,options,answer,explanation,theme")
+        .eq("concours", concours)
+        .eq("difficulty", diff)
+        .limit(count * 3);
+      if (theme) query = query.eq("theme", theme);
+      const { data: result } = await query;
+      if (result && result.length >= count) { data = result; break; }
+    }
 
-    const { data } = await query;
     if (!data || data.length < count) return null;
 
     // Filtrer les questions déjà vues
@@ -155,7 +161,9 @@ export async function generateQuiz(concours, difficulty, theme, errorMode=false,
   }
 
   // 2. Fallback : génération IA
-  const diff = difficulty===1?"débutant":difficulty===2?"intermédiaire":"expert";
+  // Fallback difficulté : si 1 ou 3 non disponible en banque, adapter le prompt
+  const diffLabel = difficulty===1?"débutant (questions simples, vocabulaire de base)":difficulty===2?"intermédiaire":"expert (questions pointues, cas cliniques complexes)";
+  const diff = diffLabel;
   const themeText = theme
     ? `Thème : "${theme}".`
     : `Varie les thèmes parmi : ${CONCOURS[concours].themes.join(", ")}.`;
