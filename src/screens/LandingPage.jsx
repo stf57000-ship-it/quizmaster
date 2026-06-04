@@ -8,9 +8,9 @@ export function LandingPage({ onEnterApp, onShowAuth, onShowPricing }) {
   const [reviewName, setReviewName] = useState("");
   const [reviewConcours, setReviewConcours] = useState("");
   const [reviews, setReviews] = useState([
-    { name: "Amandine", concours: "IFSI", stars: 5, text: "Super site ! Les questions sont vraiment adaptées au concours infirmier. J'ai progressé en 2 semaines." },
-    { name: "Kévin", concours: "Sapeur-pompier", stars: 5, text: "Les examens blancs m'ont vraiment aidé à gérer le stress. Je recommande à tous les candidats pompier." },
-    { name: "Lucie", concours: "Aide-soignant", stars: 4, text: "Très bien fait, facile à utiliser sur mobile. Le mode erreurs est parfait pour cibler ses points faibles." },
+    { name: "Sabrina M.", concours: "Aide-soignant", stars: 5, text: "Franchement je m'attendais pas à ce que ce soit aussi bien. Les questions sont vraiment dans le style du vrai concours. J'ai eu mon AS du premier coup 🙏" },
+    { name: "Thomas", concours: "Sapeur-pompier", stars: 5, text: "J'utilisais ça tous les soirs avant de dormir, 10 questions rapides. Le mode express c'est parfait pour s'entrainer sans perdre de temps" },
+    { name: "Inès", concours: "IFSI", stars: 4, text: "Bien pour réviser les bases, les explications après chaque question aident vraiment à comprendre pourquoi on s'est trompé. Juste le chargement parfois un peu long" },
   ]);
   const [showForm, setShowForm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
