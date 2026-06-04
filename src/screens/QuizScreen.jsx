@@ -57,7 +57,7 @@ export function QuizScreen({ questions, concours: concoursKey, isExam, isExpress
   const [score, setScore]           = useState(0);
   const [correctStreak, setCorrectStreak] = useState(0);
   const [answers, setAnswers]       = useState([]);
-  const [timeLeft, setTimeLeft]     = useState(isExpress ? 15 : 25);
+  const [timeLeft, setTimeLeft]     = useState(isExpress ? 30 : 60);
   const [examTimeLeft, setExamTimeLeft] = useState(initialExamTime || 0);
   const [feedback, setFeedback]     = useState(null);
   const [streakMessage, setStreakMessage] = useState(null);
@@ -70,7 +70,8 @@ export function QuizScreen({ questions, concours: concoursKey, isExam, isExpress
 
   useEffect(() => {
     if (isExam || revealed) return;
-    setTimeLeft(isExpress ? 15 : 25);
+    if (!isExpress) return; // Pas de timer en mode quiz normal
+    setTimeLeft(30);
     timerRef.current = setInterval(() => {
       setTimeLeft(t => { if (t <= 1) { clearInterval(timerRef.current); handleSelect(-1); return 0; } return t - 1; });
     }, 1000);
@@ -112,7 +113,7 @@ export function QuizScreen({ questions, concours: concoursKey, isExam, isExpress
     const newAnswers = [...answers, { selected: idx, correct: q.answer, isCorrect, question: q }];
     setAnswers(newAnswers);
     onAnswer?.({ question: q, selectedIdx: idx, isCorrect, concours: concoursKey });
-    if (isExpress) setTimeout(() => handleNext(newAnswers), 1800);
+    if (isExpress) setTimeout(() => handleNext(newAnswers), 2500);
   };
 
   const handleNext = (currentAnswers = answers) => {
@@ -148,9 +149,9 @@ export function QuizScreen({ questions, concours: concoursKey, isExam, isExpress
           <div style={{ height: "100%", width: `${progress}%`, background: `linear-gradient(90deg,${concours?.color || "var(--teal)"},${concours?.color || "var(--teal)"}99)`, borderRadius: 3, transition: "width 0.4s ease" }} />
         </div>
 
-        {!isExam && !revealed && (
+        {!isExam && !revealed && isExpress && (
           <div style={{ marginTop: 6 }}>
-            <TimerBar value={timeLeft} max={isExpress ? 15 : 25} color={timeLeft <= 5 ? "var(--orange)" : concours?.color || "var(--teal)"} />
+            <TimerBar value={timeLeft} max={30} color={timeLeft <= 5 ? "var(--orange)" : concours?.color || "var(--teal)"} />
           </div>
         )}
       </div>
