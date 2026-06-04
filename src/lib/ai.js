@@ -68,7 +68,15 @@ async function getFromBank(concours, difficulty, theme, count = 10, userId = nul
     const unseen = data.filter(q => !seenIds.includes(q.id));
     const pool = unseen.length >= count ? unseen : data;
 
-    const shuffled = pool.sort(() => Math.random() - 0.5).slice(0, count);
+    // Dédoublonner par question text avant de shuffler
+    const seen = new Set();
+    const deduped = pool.filter(q => {
+      if (seen.has(q.question)) return false;
+      seen.add(q.question);
+      return true;
+    });
+
+    const shuffled = deduped.sort(() => Math.random() - 0.5).slice(0, count);
     if (shuffled.length < count) return null;
 
     const questions = shuffled.map(q => ({

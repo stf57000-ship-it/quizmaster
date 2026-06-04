@@ -3,7 +3,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --navy:#0A2342;--teal:#1DB8A4;--blue:#2E86AB;--orange:#FF6B35;--purple:#7B61FF;--gold:#E8A838;
-  --bg:#F8FFFE;--muted:#8899AA;--border:rgba(10,35,66,0.08);
+  --bg:#F0F2F5;--muted:#8899AA;--border:rgba(10,35,66,0.08);
   --surface:#fff;--text:#0A2342;--text-muted:#8899AA;
   --font-display:'Cabinet Grotesk',sans-serif;--font-body:'DM Sans',sans-serif;
 }
