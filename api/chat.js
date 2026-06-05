@@ -41,7 +41,7 @@ function buildPrompt(concours, mode, difficulty, theme, errorQuestions) {
     return `Expert concours paramédicaux français. Génère 8 flashcards pour "${label}". ${themeText}\nRéponds UNIQUEMENT avec ce JSON valide, sans markdown:\n{"flashcards":[{"question":"...","answer":"...","theme":"..."}]}`;
   }
 
-  return `Expert concours paramédicaux français. Génère ${count} QCM ORIGINAUX pour "${label}", niveau ${diffLabel}. ${themeText} Questions précises sur le programme officiel du concours.\nRéponds UNIQUEMENT avec ce JSON valide, sans markdown:\n{"questions":[{"q":"...","options":["A...","B...","C...","D..."],"answer":0,"explanation":"...","theme":"..."}]}`;
+  return `Expert concours paramédicaux français. Génère ${count} QCM ORIGINAUX pour "${label}", niveau ${diffLabel}. ${themeText} Questions précises sur le programme officiel du concours. IMPORTANT: varie la position de la bonne réponse (answer doit être 0, 1, 2 ou 3 de façon équilibrée, pas toujours 0).\nRéponds UNIQUEMENT avec ce JSON valide, sans markdown:\n{"questions":[{"q":"...","options":["A...","B...","C...","D..."],"answer":0,"explanation":"...","theme":"..."}]}`;
 }
 
 // ── Rate limiting via Supabase ────────────────────────────────

@@ -79,14 +79,19 @@ async function getFromBank(concours, difficulty, theme, count = 10, userId = nul
     const shuffled = deduped.sort(() => Math.random() - 0.5).slice(0, count);
     if (shuffled.length < count) return null;
 
-    const questions = shuffled.map(q => ({
-      q: q.question,
-      options: q.options,
-      answer: q.answer,
-      explanation: q.explanation,
-      theme: q.theme,
-      _id: q.id
-    }));
+    const questions = shuffled.map(q => {
+      // Mélanger les options pour éviter le biais de position
+      const opts = q.options.map((text, i) => ({ text, isCorrect: i === q.answer }));
+      opts.sort(() => Math.random() - 0.5);
+      return {
+        q: q.question,
+        options: opts.map(o => o.text),
+        answer: opts.findIndex(o => o.isCorrect),
+        explanation: q.explanation,
+        theme: q.theme,
+        _id: q.id
+      };
+    });
 
     markQuestionsAsSeen(userId, shuffled.map(q => q.id), concours);
     return { questions };
