@@ -212,9 +212,9 @@ export function LandingPage({ onEnterApp, onShowAuth, onShowPricing }) {
         <div style={{fontFamily:"var(--font-display)",fontWeight:800,color:"var(--text)",marginBottom:8}}>🩺 ConcoursSanté</div>
         <div style={{fontSize:"0.78rem",color:"var(--muted)",marginBottom:8}}>concourssante.fr · Quiz IA pour concours professionnels · {new Date().getFullYear()}</div>
         <div style={{display:"flex",justifyContent:"center",gap:20,fontSize:"0.78rem"}}>
-          <a href="/cgv.html" target="_blank" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>Mentions légales</a>
-          <a href="/cgv.html" target="_blank" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>CGV</a>
-          <a href="/cgv.html" target="_blank" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>Confidentialité</a>
+          <a href="/cgv.html#mentions" target="_blank" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>Mentions légales</a>
+          <a href="/cgv.html#cgv" target="_blank" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>CGV</a>
+          <a href="/cgv.html#confidentialite" target="_blank" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>Confidentialité</a>
           <a href="mailto:contact@concourssante.fr" style={{color:"var(--muted)",textDecoration:"none"}} onMouseEnter={e=>e.target.style.color="var(--teal)"} onMouseLeave={e=>e.target.style.color="var(--muted)"}>Contact</a>
         </div>
       </footer>
