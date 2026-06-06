@@ -60,7 +60,7 @@ export function LandingPage({ onEnterApp, onShowAuth, onShowPricing }) {
 
       <section style={{maxWidth:700,margin:"0 auto",padding:"64px 24px 48px",textAlign:"center"}}>
         <div className="section-label" style={{marginBottom:16}}>Quiz IA pour concours professionnels</div>
-        <h1 style={{fontFamily:"var(--font-display)",fontWeight:900,fontSize:"clamp(2rem,5vw,3rem)",color:"var(--text)",lineHeight:1.2,marginBottom:20}}>Réussis ton concours avec l'IA 🎯</h1>
+        <h1 style={{fontFamily:"var(--font-display)",fontWeight:900,fontSize:"clamp(2rem,5vw,3rem)",color:"var(--text)",lineHeight:1.2,marginBottom:20}}>Réussis ton concours avec l'IA 🎯 😊</h1>
         <p style={{fontSize:"1.05rem",color:"var(--muted)",lineHeight:1.7,marginBottom:36,maxWidth:560,margin:"0 auto 36px"}}>Des quiz générés à la demande, des examens blancs 20 questions, des flashcards intelligentes — tout pour décrocher ton concours paramédical, sécurité ou fonction publique.</p>
         <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:48}}>
           <button className="btn btn-teal" onClick={onEnterApp} style={{padding:"14px 32px",fontSize:"1rem"}}>✨ Commencer gratuitement</button>

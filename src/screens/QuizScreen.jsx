@@ -61,6 +61,7 @@ export function QuizScreen({ questions, concours: concoursKey, isExam, isExpress
   const [examTimeLeft, setExamTimeLeft] = useState(initialExamTime || 0);
   const [feedback, setFeedback]     = useState(null);
   const [streakMessage, setStreakMessage] = useState(null);
+  const [muted, setMuted] = useState(false);
   const timerRef     = useRef(null);
   const examTimerRef = useRef(null);
 
@@ -97,7 +98,7 @@ export function QuizScreen({ questions, concours: concoursKey, isExam, isExpress
       setScore(s => s + 1);
       const newStreak = correctStreak + 1;
       setCorrectStreak(newStreak);
-      playSound("correct");
+      if (!muted) playSound("correct");
       popConfetti(concours?.color || "#1DB8A4");
       if (newStreak === 3)      setStreakMessage({ text: "🔥 3 d'affilée !", color: "#FF9800" });
       else if (newStreak === 5) setStreakMessage({ text: "⚡ 5 en série !", color: "#FF6B35" });
@@ -106,7 +107,7 @@ export function QuizScreen({ questions, concours: concoursKey, isExam, isExpress
     } else {
       setCorrectStreak(0);
       setStreakMessage(null);
-      playSound("wrong");
+      if (!muted) playSound("wrong");
     }
 
     setFeedback({ text: isCorrect ? rand(GOOD) : rand(BAD), isCorrect });
@@ -141,6 +142,10 @@ export function QuizScreen({ questions, concours: concoursKey, isExam, isExpress
             {isExpress && <span style={{ fontSize: "0.72rem", background: "rgba(255,152,0,0.1)", color: "#E65100", padding: "3px 8px", borderRadius: 20, fontWeight: 700, fontFamily: "var(--font-display)" }}>⚡ Express</span>}
             {correctStreak >= 2 && !revealed && <span style={{ fontSize: "0.72rem", background: "rgba(255,107,53,0.1)", color: "var(--orange)", padding: "3px 8px", borderRadius: 20, fontWeight: 700, fontFamily: "var(--font-display)" }}>🔥 ×{correctStreak}</span>}
             {isExam && <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "0.9rem", color: examTimeLeft < 120 ? "var(--orange)" : "var(--text)" }}>⏱ {fmt(examTimeLeft)}</div>}
+            <button onClick={() => setMuted(m => !m)}
+              style={{ background: "none", border: "1px solid var(--border)", borderRadius: 8, padding: "5px 9px", cursor: "pointer", fontSize: "0.85rem" }}>
+              {muted ? "🔇" : "🔊"}
+            </button>
             <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "0.9rem", color: "var(--text)" }}>{current + 1}/{questions.length}</div>
           </div>
         </div>
