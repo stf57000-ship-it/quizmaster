@@ -142,6 +142,16 @@ export function HomeScreen({ appState, user, userName, isPremium, dailyRemaining
         {mode==="express"&&<div className="fade-in" style={{ marginTop:10,background:"rgba(255,152,0,0.08)",border:"1px solid rgba(255,152,0,0.2)",borderRadius:10,padding:"10px 14px",fontSize:"0.8rem",color:"#E65100" }}>⚡ 5 questions · 15 secondes chacune · Parfait pour réviser en 3 minutes chrono</div>}
       </div>
 
+      {/* Bouton lancer — version sticky sous le mode */}
+      {selectedConcours && (
+        <button onClick={handleStart} className="fade-in"
+          style={{ width:"100%", justifyContent:"center", fontSize:"1rem", padding:"15px", background:btnColors[mode], color:"#fff", borderRadius:14, border:"none", fontFamily:"var(--font-display)", fontWeight:800, display:"flex", alignItems:"center", gap:8, marginBottom:16, boxShadow:`0 4px 20px ${btnColors[mode]}40`, cursor:"pointer" }}
+          onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";}}
+          onMouseLeave={e=>{e.currentTarget.style.transform="";}}>
+          {btnLabels[mode]}
+        </button>
+      )}
+
       {/* ── CONCOURS SANTÉ — Toujours visibles ── */}
       <div style={{ marginBottom:16 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
