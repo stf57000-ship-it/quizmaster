@@ -9,9 +9,17 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/((?!api/|concours-ifsi-infirmier|concours-aide-soignant|concours-ambulancier|concours-sapeur-pompier|concours-auxiliaire-puericulture|blog-erreurs-concours-ifsi|blog-programme-concours-ambulancier|blog-reussir-concours-aide-soignant|cgv|mentions-legales|politique-confidentialite|sitemap\\.xml).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/concours-ifsi-infirmier", "destination": "/concours-ifsi-infirmier.html" },
+    { "source": "/concours-aide-soignant", "destination": "/concours-aide-soignant.html" },
+    { "source": "/concours-ambulancier", "destination": "/concours-ambulancier.html" },
+    { "source": "/concours-sapeur-pompier", "destination": "/concours-sapeur-pompier.html" },
+    { "source": "/concours-auxiliaire-puericulture", "destination": "/concours-auxiliaire-puericulture.html" },
+    { "source": "/blog-erreurs-concours-ifsi", "destination": "/blog-erreurs-concours-ifsi.html" },
+    { "source": "/blog-programme-concours-ambulancier", "destination": "/blog-programme-concours-ambulancier.html" },
+    { "source": "/blog-reussir-concours-aide-soignant", "destination": "/blog-reussir-concours-aide-soignant.html" },
+    { "source": "/cgv", "destination": "/cgv.html" },
+    { "source": "/mentions-legales", "destination": "/mentions-legales.html" },
+    { "source": "/politique-confidentialite", "destination": "/politique-confidentialite.html" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
