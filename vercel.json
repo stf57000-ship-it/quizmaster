@@ -1,1 +1,17 @@
-{"headers":[{"source":"/(.*)", "headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"X-Frame-Options","value":"DENY"}]}],"rewrites":[{"source":"/((?!api/).*)", "destination":"/index.html"}]}
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!api/|concours-ifsi-infirmier|concours-aide-soignant|concours-ambulancier|concours-sapeur-pompier|concours-auxiliaire-puericulture|blog-erreurs-concours-ifsi|blog-programme-concours-ambulancier|blog-reussir-concours-aide-soignant|cgv|mentions-legales|politique-confidentialite|sitemap\\.xml).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
