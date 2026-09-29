@@ -68,7 +68,8 @@ export function isPremiumActive(sub) {
 
 export async function getLeaderboard(limit = 10) {
   try {
-    const { data } = await supabase.from("user_progress").select("user_id,best_score,streak,total_quizzes,concours_played").order("best_score", { ascending:false }).limit(limit);
+    // Fonction SQL sécurisée : ne renvoie que score, série, un concours et "c'est toi ?"
+    const { data } = await supabase.rpc("get_leaderboard", { lim: limit });
     return data || [];
   } catch { return []; }
 }

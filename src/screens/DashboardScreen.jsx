@@ -152,12 +152,12 @@ export function LeaderboardScreen({ appState, user, userName, selectedConcours }
 
   const rows = loading ? [] : leaders.slice(0, 3).map((l, i) => ({
     rank: i+1,
-    name: l.user_id === user?.id ? userName : `Candidat ${i+1}`,
+    name: l.is_you ? userName : `Candidat ${i+1}`,
     score: l.best_score || 0,
     streak: l.streak || 0,
-    concours: Object.keys(l.concours_played||{})[0] ? CONCOURS[Object.keys(l.concours_played)[0]]?.label : "—",
+    concours: l.concours ? (CONCOURS[l.concours]?.label || "—") : "—",
     badge: ["🏆","🥈","🥉"][i] || "",
-    isYou: l.user_id === user?.id,
+    isYou: !!l.is_you,
   }));
 
   const userInTop = rows.find(r => r.isYou);
