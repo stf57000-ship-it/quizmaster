@@ -12,7 +12,8 @@ const ALLOWED_CONCOURS = new Set([
   "infirmier","aide_soignant","auxiliaire","ambulancier","atsem","ash",
   "pompier","gendarmerie","police_nationale","armee","cap_aepe","bac_assp",
   "aidesoignant","sapeurpompier","policemunicipal","gardedeprison",
-  "surveillant","agentdesecurite","ssiap","bpjeps","crfpe"
+  "surveillant","agentdesecurite","ssiap","bpjeps","crfpe",
+  "adjoint_administratif"
 ]);
 const ALLOWED_MODES = new Set(["quiz","exam","express","errors","flashcards"]);
 const ALLOWED_DIFFICULTIES = new Set([1, 2, 3]);
@@ -25,7 +26,8 @@ function buildPrompt(concours, mode, difficulty, theme, errorQuestions) {
     auxiliaire:"Auxiliaire de puériculture", ambulancier:"Ambulancier", atsem:"ATSEM",
     ash:"Agent de service hospitalier", pompier:"Sapeur-pompier", gendarmerie:"Gendarme",
     police_nationale:"Police nationale", armee:"Armée de Terre",
-    cap_aepe:"CAP AEPE", bac_assp:"Bac Pro ASSP"
+    cap_aepe:"CAP AEPE", bac_assp:"Bac Pro ASSP",
+    adjoint_administratif:"Adjoint administratif hospitalier"
   };
   const label = concoursLabels[concours] || concours;
   const diffLabel = difficulty===1?"débutant (questions simples, vocabulaire de base)":difficulty===3?"expert (questions pointues, cas cliniques complexes)":"intermédiaire";
