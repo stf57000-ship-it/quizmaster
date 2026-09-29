@@ -62,7 +62,7 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
       // 2. Email de confirmation (non bloquant)
       await fetch("/api/send-email", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ type: "cancellation", to: user.email, data: { name: firstName, reason } })
       });
 

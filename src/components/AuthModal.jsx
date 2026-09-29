@@ -20,10 +20,11 @@ export function AuthModal({ onClose, onSuccess }) {
         if (error) throw error;
         onSuccess?.(data.user); onClose();
       } else if (mode === "register") {
-        const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
+        const { data: signUpData, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
         if (error) throw error;
         setSuccess("Compte créé ! Vérifiez votre email.");
-        fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "welcome", to: email, data: { name: name || email.split("@")[0] } }) }).catch(() => {});
+        const welcomeToken = signUpData?.session?.access_token;
+        if (welcomeToken) fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${welcomeToken}` }, body: JSON.stringify({ type: "welcome", data: { name: name || email.split("@")[0] } }) }).catch(() => {});
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${import.meta.env.VITE_APP_URL}/reset-password` });
         if (error) throw error;

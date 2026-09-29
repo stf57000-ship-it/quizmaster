@@ -1,6 +1,27 @@
 // api/send-email.js
 import { Resend } from "resend";
+import { createClient } from "@supabase/supabase-js";
 const resend = new Resend(process.env.RESEND_API_KEY);
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
+// E-mails déclenchés par l'utilisateur connecté : envoyés UNIQUEMENT à l'adresse de son compte.
+// Tous les autres types sont réservés au serveur (clé x-admin-key).
+const USER_TYPES = new Set(["welcome", "cancellation"]);
+
+const esc = (v) => String(v ?? "").slice(0, 80)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+async function getUserFromAuth(authHeader) {
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  try {
+    const { data, error } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    return error || !data?.user ? null : data.user;
+  } catch { return null; }
+}
 const FROM = "ConcoursSanté <noreply@concourssante.fr>";
 
 // Validation email basique
@@ -29,30 +50,37 @@ const templates = {
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.VITE_APP_URL || "https://concourssante.fr");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-key");
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).end();
 
-  const { type, to, data } = req.body;
-
-  // Validation du type et du destinataire AVANT la vérification de la clé
-  if (!type || !to || !templates[type]) {
-    return res.status(400).json({ error: "type ou destinataire manquant" });
-  }
-  if (!isValidEmail(to)) {
-    return res.status(400).json({ error: "Email destinataire invalide" });
+  const { type, data } = req.body || {};
+  if (!type || !templates[type]) {
+    return res.status(400).json({ error: "type inconnu" });
   }
 
-  // Sécurisation : clé secrète obligatoire sauf pour la résiliation (appelée côté client)
-  const isPublicType = type === "cancellation";
-  const adminKey = req.headers["x-admin-key"];
-  if (!isPublicType && (!adminKey || adminKey !== process.env.ADMIN_KEY)) {
-    return res.status(401).json({ error: "Non autorisé" });
+  let to;
+  if (USER_TYPES.has(type)) {
+    // Utilisateur connecté obligatoire ; le destinataire est FORCÉ à l'adresse de son compte
+    const user = await getUserFromAuth(req.headers["authorization"]);
+    if (!user?.email) return res.status(401).json({ error: "Non autorisé" });
+    to = user.email;
+  } else {
+    // Réservé au serveur (webhook Stripe, tâches planifiées)
+    const adminKey = req.headers["x-admin-key"];
+    if (!adminKey || adminKey !== process.env.ADMIN_KEY) {
+      return res.status(401).json({ error: "Non autorisé" });
+    }
+    to = req.body?.to;
+    if (!isValidEmail(to)) return res.status(400).json({ error: "Email destinataire invalide" });
   }
 
   try {
-    const { subject, html } = templates[type](data || {});
+    const safe = { ...(data || {}), name: esc(data?.name), daysSince: Number(data?.daysSince) || 0 };
+    const { subject, html } = templates[type](safe);
     const result = await resend.emails.send({ from: FROM, to, subject, html });
-    return res.status(200).json({ success: true, id: result.id });
+    return res.status(200).json({ success: true, id: result?.id });
   } catch (error) {
     console.error("Email error:", error);
     return res.status(500).json({ error: "Échec envoi email" });
