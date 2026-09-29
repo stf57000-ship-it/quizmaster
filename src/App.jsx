@@ -307,7 +307,7 @@ export default function App() {
             appState={appState}
             onStart={() => handleStart({
               mode: "quiz",
-              concours: selectedConcours || appState.preferredConcours || "infirmier",
+              concours: selectedConcours || (CONCOURS[appState.preferredConcours] ? appState.preferredConcours : null) || "infirmier",
               difficulty: 2,
               theme: null
             })}

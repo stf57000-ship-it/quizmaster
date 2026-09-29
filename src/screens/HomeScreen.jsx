@@ -15,7 +15,7 @@ const ALL_MODES = [
 ];
 
 // Concours santé/paramédical — priorité absolue (nom du site)
-const HEALTH_CONCOURS = ["aide_soignant","infirmier","auxiliaire","ambulancier","atsem","ash","adjoint_administratif","agent_mortuaire"];
+const HEALTH_CONCOURS = ["aide_soignant","infirmier","auxiliaire","ambulancier","atsem","ash","adjoint_administratif"];
 
 // Autres concours — secondaires
 const OTHER_CATEGORIES = [
@@ -24,7 +24,7 @@ const OTHER_CATEGORIES = [
 ];
 
 export function HomeScreen({ appState, user, userName, isPremium, dailyRemaining, onStart, onShowAuth, onShowPricing, onUpdateState, onConcoursSelect }) {
-  const preferred = appState.preferredConcours || null;
+  const preferred = CONCOURS[appState.preferredConcours] ? appState.preferredConcours : null;
   const [mode, setMode]                   = useState("quiz");
   const [selectedConcours, setSelected]   = useState(preferred);
   const [difficulty, setDifficulty]       = useState(appState.preferredNiveau === "debutant" ? 1 : appState.preferredNiveau === "avance" ? 3 : 2);

@@ -184,7 +184,7 @@ export function LandingPage({ onEnterApp, onShowAuth, onShowPricing }) {
             <div style={{position:"absolute",top:12,right:12,background:"var(--orange)",color:"#fff",borderRadius:20,padding:"3px 10px",fontSize:"0.68rem",fontWeight:700}}>⭐ Populaire</div>
             <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:"0.75rem",color:"rgba(29,184,164,0.8)",letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Premium</div>
             <div style={{fontFamily:"var(--font-display)",fontWeight:900,fontSize:"2rem",color:"#fff",marginBottom:16}}>9€<span style={{fontSize:"0.75rem",color:"rgba(255,255,255,0.4)",fontWeight:400}}>/mois</span></div>
-            {["Quiz illimités","Examens blancs 20 questions","Flashcards","14 concours","Stats avancées"].map(f=><div key={f} style={{fontSize:"0.82rem",color:"rgba(255,255,255,0.7)",marginBottom:6}}>✓ {f}</div>)}
+            {["Quiz illimités","Examens blancs 20 questions","Flashcards","13 concours","Stats avancées"].map(f=><div key={f} style={{fontSize:"0.82rem",color:"rgba(255,255,255,0.7)",marginBottom:6}}>✓ {f}</div>)}
             <button className="btn btn-teal" onClick={onShowPricing} style={{width:"100%",justifyContent:"center",marginTop:16,padding:"11px"}}>Passer Premium</button>
           </div>
         </div>

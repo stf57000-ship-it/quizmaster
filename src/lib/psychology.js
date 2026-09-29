@@ -60,7 +60,7 @@ export function getCuriosityMessage(state, concoursKey) {
 }
 
 export function getActiveCandidates(concoursKey) {
-  const bases = { aide_soignant:45, infirmier:38, auxiliaire:22, ambulancier:18, atsem:12, pompier:34, police_nationale:41, gendarmerie:29, armee:19, ash:16, adjoint_administratif:11, agent_mortuaire:8, bac_assp:27, cap_aepe:21 };
+  const bases = { aide_soignant:45, infirmier:38, auxiliaire:22, ambulancier:18, atsem:12, pompier:34, police_nationale:41, gendarmerie:29, armee:19, ash:16, adjoint_administratif:11, bac_assp:27, cap_aepe:21 };
   const base = bases[concoursKey] || 15;
   const variation = Math.floor(Math.sin(new Date().getHours() * 0.8) * 8) + 5;
   return Math.max(5, base + variation);
