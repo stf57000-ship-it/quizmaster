@@ -126,7 +126,8 @@ export default function App() {
     localStorage.setItem(NOTIF_DISMISSED_KEY, "1");
   };
 
-  const handleEnterApp = () => setScreen(localStorage.getItem("cs_onboarding_done") ? "home" : "onboarding");
+  // Un utilisateur connecté n'a jamais à repasser par l'onboarding (autre navigateur, données du site effacées…)
+  const handleEnterApp = () => setScreen((localStorage.getItem("cs_onboarding_done") || user) ? "home" : "onboarding");
   const handleOnboardingComplete = (prefs) => {
     localStorage.setItem("cs_onboarding_done", "1");
     if (prefs.concours) { update(s => ({ ...s, preferredConcours: prefs.concours, preferredNiveau: prefs.niveau })); setSelectedConcours(prefs.concours); }
@@ -207,7 +208,7 @@ export default function App() {
   if (screen === "landing") return (
     <>
       <LandingPage onEnterApp={handleEnterApp} onShowAuth={() => setShowAuth(true)} onShowPricing={() => setShowPricing(true)} />
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={() => { setShowAuth(false); handleEnterApp(); }} />}
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={() => { setShowAuth(false); try { localStorage.setItem("cs_onboarding_done", "1"); } catch {} setScreen("home"); }} />}
       {showPricing && <PricingModal onClose={() => setShowPricing(false)} user={user} onShowAuth={() => { setShowPricing(false); setShowAuth(true); }} />}
     </>
   );
