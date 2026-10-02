@@ -31,6 +31,7 @@ export function HomeScreen({ appState, user, userName, isPremium, dailyRemaining
   const [selectedTheme, setSelectedTheme] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [pickerOpen, setPickerOpen]     = useState(!preferred);   // grilles de concours visibles ?
 
   const streak         = getStreak(appState);
   const globalAccuracy = getGlobalAccuracy(appState);
@@ -41,6 +42,8 @@ export function HomeScreen({ appState, user, userName, isPremium, dailyRemaining
   const handleSelectConcours = (key) => {
     setSelected(key);
     setSelectedTheme(null);
+    setPickerOpen(false);
+    setExpandedCategory(null);
     onConcoursSelect?.(key);
     if (mode === "quiz") quizPreloader.preload(key, difficulty, null);
   };
@@ -152,7 +155,23 @@ export function HomeScreen({ appState, user, userName, isPremium, dailyRemaining
         </button>
       )}
 
-      {/* ── CONCOURS SANTÉ — Toujours visibles ── */}
+      {/* ── Concours choisi : barre compacte (les grilles se replient) ── */}
+      {concours && !pickerOpen && (
+        <div className="fade-in" style={{ display:"flex", alignItems:"center", gap:12, background:concours.colorLight, border:`2px solid ${concours.color}`, borderRadius:14, padding:"12px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:24 }}>{concours.icon}</div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div className="section-label" style={{ marginBottom:2 }}>Concours choisi</div>
+            <div style={{ fontFamily:"var(--font-display)", fontWeight:800, fontSize:"0.95rem", color:concours.color, lineHeight:1.3 }}>{concours.label}</div>
+          </div>
+          <button onClick={() => setPickerOpen(true)}
+            style={{ background:"var(--surface)", border:`1.5px solid ${concours.color}`, borderRadius:10, padding:"8px 14px", cursor:"pointer", fontFamily:"var(--font-display)", fontWeight:800, fontSize:"0.78rem", color:concours.color, flexShrink:0 }}>
+            Changer ▾
+          </button>
+        </div>
+      )}
+
+      {/* ── CONCOURS SANTÉ + AUTRES : visibles seulement tant qu'aucun concours n'est choisi (ou via « Changer ») ── */}
+      {(pickerOpen || !concours) && (<>
       <div style={{ marginBottom:16 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
           <span>🩺</span>
@@ -185,6 +204,7 @@ export function HomeScreen({ appState, user, userName, isPremium, dailyRemaining
           </div>
         ))}
       </div>
+      </>)}
 
       {/* Social proof */}
       {selectedConcours && activeCandidates && (
