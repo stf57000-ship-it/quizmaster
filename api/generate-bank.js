@@ -10,7 +10,7 @@ const supabase = createClient(
 
 const CONCOURS_LIST = [
   "aide_soignant","infirmier","auxiliaire","ambulancier","atsem",
-  "pompier","police_nationale","gendarmerie","armee","ash",
+  "pompier","police_nationale","gendarmerie","ash",
   "adjoint_administratif","bac_assp","cap_aepe"
 ];
 
@@ -19,7 +19,7 @@ const CONCOURS_LABELS = {
   auxiliaire:"Auxiliaire de puériculture", ambulancier:"Ambulancier",
   atsem:"ATSEM", pompier:"Sapeur-Pompier",
   police_nationale:"Gardien de la Paix", gendarmerie:"Gendarme",
-  armee:"Armée de Terre (EVAT)", ash:"Agent Hospitalier (ASH)",
+  ash:"Agent Hospitalier (ASH)",
   adjoint_administratif:"Adjoint administratif hôpital",
   bac_assp:"Bac Pro ASSP", cap_aepe:"CAP AEPE"
 };

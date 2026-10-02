@@ -35,7 +35,6 @@ const CONCOURS = {
   pompier:          { label: "Sapeur-pompier",              themes: ["Secourisme", "Lutte incendie", "Réglementation", "Organisation", "Physique"] },
   gendarmerie:      { label: "Gendarme",                    themes: ["Droit pénal", "Procédure pénale", "Institutions", "Culture générale", "Sport"] },
   police_nationale: { label: "Police nationale",            themes: ["Droit", "Procédure", "Institutions", "Culture générale", "Éthique"] },
-  armee:            { label: "Armée de Terre",              themes: ["Histoire militaire", "Géographie", "Physique", "Culture générale", "Citoyenneté"] },
   cap_aepe:         { label: "CAP AEPE",                    themes: ["Développement enfant", "Nutrition", "Hygiène", "Jeux éducatifs", "Famille"] },
   bac_assp:         { label: "Bac Pro ASSP",                themes: ["Biologie", "Soins", "Nutrition", "Ergonomie", "Éthique"] },
 };

@@ -19,7 +19,7 @@ const HEALTH_CONCOURS = ["aide_soignant","infirmier","auxiliaire","ambulancier",
 
 // Autres concours — secondaires
 const OTHER_CATEGORIES = [
-  { key:"securite_defense",  label:"Sécurité & Défense",              icon:"🛡️", color:"#D62828", concours:["pompier","police_nationale","gendarmerie","armee"] },
+  { key:"securite_defense",  label:"Sécurité & Défense",              icon:"🛡️", color:"#D62828", concours:["pompier","police_nationale","gendarmerie"] },
   { key:"lycee_pro",         label:"Lycée Pro & CAP",                 icon:"🎓", color:"#2ECC71", concours:["bac_assp","cap_aepe"] },
 ];
 

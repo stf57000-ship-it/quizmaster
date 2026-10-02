@@ -6,7 +6,7 @@ const FEATURES = [
   { icon:"🧠", text:"Quiz IA illimités" },
   { icon:"📋", text:"Examens blancs 20 questions" },
   { icon:"🗂️", text:"Flashcards illimitées" },
-  { icon:"🛡️", text:"13 concours disponibles" },
+  { icon:"🛡️", text:"12 concours disponibles" },
   { icon:"📊", text:"Statistiques avancées" },
   { icon:"👑", text:"Badge Premium débloqué" },
 ];

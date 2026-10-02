@@ -10,7 +10,7 @@ const supabase = createClient(
 // ── Listes blanches ───────────────────────────────────────────
 const ALLOWED_CONCOURS = new Set([
   "infirmier","aide_soignant","auxiliaire","ambulancier","atsem","ash",
-  "pompier","gendarmerie","police_nationale","armee","cap_aepe","bac_assp",
+  "pompier","gendarmerie","police_nationale","cap_aepe","bac_assp",
   "aidesoignant","sapeurpompier","policemunicipal","gardedeprison",
   "surveillant","agentdesecurite","ssiap","bpjeps","crfpe",
   "adjoint_administratif"
@@ -25,7 +25,7 @@ function buildPrompt(concours, mode, difficulty, theme, errorQuestions) {
     infirmier:"Infirmier (IFSI)", aide_soignant:"Aide-soignant", aidesoignant:"Aide-soignant",
     auxiliaire:"Auxiliaire de puériculture", ambulancier:"Ambulancier", atsem:"ATSEM",
     ash:"Agent de service hospitalier", pompier:"Sapeur-pompier", gendarmerie:"Gendarme",
-    police_nationale:"Police nationale", armee:"Armée de Terre",
+    police_nationale:"Police nationale",
     cap_aepe:"CAP AEPE", bac_assp:"Bac Pro ASSP",
     adjoint_administratif:"Adjoint administratif hospitalier"
   };
