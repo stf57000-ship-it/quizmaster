@@ -10,7 +10,7 @@ const supabase = createClient(
 
 // E-mails déclenchés par l'utilisateur connecté : envoyés UNIQUEMENT à l'adresse de son compte.
 // Tous les autres types sont réservés au serveur (clé x-admin-key).
-const USER_TYPES = new Set(["welcome", "cancellation"]);
+const USER_TYPES = new Set(["welcome", "cancellation", "retention_pause"]);
 
 const esc = (v) => String(v ?? "").slice(0, 80)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -41,6 +41,10 @@ const templates = {
   cancellation: ({ name }) => ({
     subject: "Résiliation confirmée — À bientôt 👋",
     html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px"><div style="text-align:center;margin-bottom:32px"><div style="font-size:48px">👋</div><h1 style="font-size:24px;font-weight:900;color:#0A2342">Résiliation confirmée</h1></div><p style="color:#445566;font-size:16px;line-height:1.6">Bonjour <strong>${name}</strong>,</p><p style="color:#445566;font-size:15px;line-height:1.6">Ta résiliation a bien été prise en compte. Ton accès Premium reste actif jusqu'à la fin de ta période en cours.</p><div style="background:#f7f9fc;border-radius:12px;padding:20px;margin:24px 0"><div style="font-size:14px;color:#445566;line-height:1.8">✓ Résiliation confirmée<br/>✓ Accès maintenu jusqu'à fin de période<br/>✓ Aucun frais supplémentaire<br/>✓ Réabonnement possible à tout moment</div></div><div style="text-align:center;margin:32px 0"><a href="https://concourssante.fr" style="background:#1DB8A4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:800">Revenir sur ConcoursSanté</a></div><p style="color:#aab;font-size:12px;text-align:center">ConcoursSanté · Bonne chance pour la suite 🍀</p></div>`
+  }),
+  retention_pause: ({ name }) => ({
+    subject: "Ton abonnement est en pause pendant 30 jours ⏸️",
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px"><div style="text-align:center;margin-bottom:32px"><div style="font-size:48px">⏸️</div><h1 style="font-size:24px;font-weight:900;color:#0A2342">Pause confirmée</h1></div><p style="color:#445566;font-size:16px;line-height:1.6">Bonjour <strong>${name}</strong>,</p><p style="color:#445566;font-size:15px;line-height:1.6">Ton abonnement Premium est mis en pause pendant 30 jours : aucun prélèvement pendant cette période et ton accès reste actif. Il reprendra ensuite automatiquement.</p><div style="background:#f7f9fc;border-radius:12px;padding:20px;margin:24px 0"><div style="font-size:14px;color:#445566;line-height:1.8">✓ Aucun frais pendant la pause<br/>✓ Accès Premium maintenu<br/>✓ Tu peux résilier à tout moment depuis Mon compte</div></div><div style="text-align:center;margin:32px 0"><a href="https://concourssante.fr" style="background:#1DB8A4;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:800">Revenir sur ConcoursSanté</a></div><p style="color:#aab;font-size:12px;text-align:center">ConcoursSanté · Bonne continuation 🍀</p></div>`
   }),
   inactivity: ({ name, daysSince }) => ({
     subject: `${name}, tu n'as pas révisé depuis ${daysSince} jours 👀`,

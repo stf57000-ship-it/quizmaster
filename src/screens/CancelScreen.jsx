@@ -34,14 +34,23 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
     setError(null);
     try {
       const token = await getToken();
-      const res = await fetch("/api/cancel-subscription", {
+      const res = await fetch("/api/pause-subscription", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error("Erreur résiliation");
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j?.error || "Erreur pause");
+      }
+      // E-mail de confirmation (envoyé uniquement à l'adresse du compte connecté)
+      fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ type: "retention_pause", data: { name: userName } })
+      }).catch(() => {});
       onPause?.(type);
     } catch (err) {
-      setError("Une erreur est survenue. Réessaie ou contacte le support.");
+      setError(err?.message && err.message !== "Erreur pause" ? err.message : "Une erreur est survenue. Réessaie ou contacte le support.");
     }
     setLoading(false);
   };
@@ -131,7 +140,7 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
                 </div>
                 <div style={{ background:"rgba(29,184,164,0.06)", border:"2px solid var(--teal)", borderRadius:16, padding:"20px", marginBottom:20, textAlign:"center" }}>
                   <div style={{ fontFamily:"var(--font-display)", fontWeight:900, fontSize:"1.1rem", color:"var(--teal)", marginBottom:4 }}>🎁 1 mois offert</div>
-                  <div style={{ fontSize:"0.82rem", color:"var(--muted)" }}>Aucun débit pendant 30 jours · Résiliable à tout moment</div>
+                  <div style={{ fontSize:"0.82rem", color:"var(--muted)" }}>Aucun débit pendant 30 jours · Offre valable une seule fois · Résiliable à tout moment</div>
                 </div>
                 <button className="btn btn-teal" onClick={() => handlePause("30days")} disabled={loading}
                   style={{ width:"100%", justifyContent:"center", padding:"14px", marginBottom:12 }}>
@@ -143,11 +152,11 @@ export function CancelScreen({ user, userName, daysLeft, onKeep, onCancel, onPau
             {reason === "usage" && (
               <div>
                 <div style={{ color:"var(--muted)", fontSize:"0.88rem", textAlign:"center", marginBottom:24, lineHeight:1.6 }}>
-                  La vie est chargée, on comprend. On peut <strong style={{ color:"var(--teal)" }}>mettre ton abonnement en pause 30 jours</strong> — reprends quand tu veux, sans frais.
+                  La vie est chargée, on comprend. On peut <strong style={{ color:"var(--teal)" }}>mettre ton abonnement en pause 30 jours</strong> — sans frais. La facturation reprend automatiquement au bout de 30 jours (offre valable une seule fois).
                 </div>
                 <div style={{ background:"rgba(29,184,164,0.06)", border:"2px solid var(--teal)", borderRadius:16, padding:"20px", marginBottom:20, textAlign:"center" }}>
                   <div style={{ fontFamily:"var(--font-display)", fontWeight:900, fontSize:"1.1rem", color:"var(--teal)", marginBottom:4 }}>⏸️ Pause 30 jours</div>
-                  <div style={{ fontSize:"0.82rem", color:"var(--muted)" }}>Ton accès reste actif · Aucun débit · Reprends quand tu veux</div>
+                  <div style={{ fontSize:"0.82rem", color:"var(--muted)" }}>Ton accès reste actif · Aucun débit pendant 30 jours · Reprise automatique ensuite</div>
                 </div>
                 <button className="btn btn-teal" onClick={() => handlePause("pause")} disabled={loading}
                   style={{ width:"100%", justifyContent:"center", padding:"14px", marginBottom:12 }}>

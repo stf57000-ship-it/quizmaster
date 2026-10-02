@@ -10,6 +10,7 @@ import { CancelScreen } from "./CancelScreen.jsx";
 export function DashboardScreen({ appState, user, userName, isPremium, syncStatus, points, level, onShowAuth }) {
   const [showCancel, setShowCancel] = useState(false);
   const [cancelDone, setCancelDone] = useState(false);
+  const [pauseDone, setPauseDone] = useState(false);
 
   const streak         = getStreak(appState);
   const globalAccuracy = getGlobalAccuracy(appState);
@@ -20,15 +21,7 @@ export function DashboardScreen({ appState, user, userName, isPremium, syncStatu
       userName={userName}
       onKeep={() => setShowCancel(false)}
       onCancel={() => { setShowCancel(false); setCancelDone(true); }}
-      onPause={(type) => {
-        // Email de pause
-        fetch("/api/send-email", {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ type:"retention_pause", to:user.email, data:{ name:userName, days:30 } })
-        }).catch(()=>{});
-        setShowCancel(false);
-      }}
+      onPause={() => { setShowCancel(false); setPauseDone(true); }}
     />
   );
 
@@ -41,6 +34,12 @@ export function DashboardScreen({ appState, user, userName, isPremium, syncStatu
           : "Connectez-vous pour sauvegarder"
         }
       </div>
+
+      {pauseDone && (
+        <div className="fade-in" style={{ background:"rgba(29,184,164,0.08)", border:"1px solid rgba(29,184,164,0.2)", borderRadius:12, padding:"12px 16px", marginBottom:16, fontSize:"0.85rem", color:"var(--teal)" }}>
+          ⏸️ Abonnement mis en pause pendant 30 jours : aucun prélèvement, ton accès reste actif. Un e-mail de confirmation t'a été envoyé.
+        </div>
+      )}
 
       {cancelDone && (
         <div className="fade-in" style={{ background:"rgba(29,184,164,0.08)", border:"1px solid rgba(29,184,164,0.2)", borderRadius:12, padding:"12px 16px", marginBottom:16, fontSize:"0.85rem", color:"var(--teal)" }}>
