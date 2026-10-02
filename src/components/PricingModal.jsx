@@ -42,7 +42,7 @@ export function PricingModal({ onClose, user, onShowAuth }) {
         </div>
         {error&&<div style={{marginBottom:16,background:"#FEE",border:"1px solid #FCC",borderRadius:8,padding:"10px 14px",fontSize:"0.85rem",color:"#C00"}}>{error}</div>}
         <button className="btn btn-teal" onClick={handleUpgrade} disabled={loading} style={{width:"100%",justifyContent:"center",fontSize:"1rem",padding:"14px"}}>
-          {loading?"Redirection...":user?"🚀 Commencer l'essai gratuit 7 jours":"🔐 Créer un compte pour continuer"}
+          {loading?"Redirection...":user?"🚀 S'abonner — 9 €/mois":"🔐 Créer un compte pour continuer"}
         </button>
       </div>
     </div>
