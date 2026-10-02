@@ -1,5 +1,6 @@
 // src/components/PricingModal.jsx
 import { useState } from "react";
+import { supabase } from "../lib/supabase.js";
 
 export function PricingModal({ onClose, user, onShowAuth }) {
   const [loading,setLoading]=useState(false);
@@ -9,7 +10,9 @@ export function PricingModal({ onClose, user, onShowAuth }) {
     if(!user){onClose();onShowAuth?.();return;}
     setLoading(true);setError(null);
     try{
-      const res=await fetch("/api/create-checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:user.id,userEmail:user.email})});
+      const { data: { session } } = await supabase.auth.getSession();
+      if(!session?.access_token) throw new Error("Session expirée : déconnecte-toi puis reconnecte-toi.");
+      const res=await fetch("/api/create-checkout",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${session.access_token}`},body:JSON.stringify({userId:user.id,userEmail:user.email})});
       const data=await res.json();
       if(!res.ok)throw new Error(data.error||"Erreur paiement");
       window.location.href=data.url;
