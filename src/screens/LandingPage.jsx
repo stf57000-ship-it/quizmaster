@@ -3,27 +3,6 @@ import { useState } from "react";
 
 export function LandingPage({ onEnterApp, onShowAuth, onShowPricing }) {
   const [openFaq, setOpenFaq] = useState(null);
-  const [reviewText, setReviewText] = useState("");
-  const [reviewStars, setReviewStars] = useState(5);
-  const [reviewName, setReviewName] = useState("");
-  const [reviewConcours, setReviewConcours] = useState("");
-  const [reviews, setReviews] = useState([
-    { name: "Sabrina M.", concours: "Aide-soignant", stars: 5, text: "Franchement je m'attendais pas à ce que ce soit aussi bien. Les questions sont vraiment dans le style du vrai concours. J'ai eu mon AS du premier coup 🙏" },
-    { name: "Thomas", concours: "Sapeur-pompier", stars: 5, text: "J'utilisais ça tous les soirs avant de dormir, 10 questions rapides. Le mode express c'est parfait pour s'entrainer sans perdre de temps" },
-    { name: "Inès", concours: "IFSI", stars: 4, text: "Bien pour réviser les bases, les explications après chaque question aident vraiment à comprendre pourquoi on s'est trompé. Juste le chargement parfois un peu long" },
-  ]);
-  const [showForm, setShowForm] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmitReview = () => {
-    if (!reviewText.trim() || !reviewName.trim()) return;
-    const words = reviewText.trim().split(/\s+/);
-    const capped = words.slice(0, 30).join(" ") + (words.length > 30 ? "..." : "");
-    setReviews(prev => [{ name: reviewName, concours: reviewConcours || "Candidat", stars: reviewStars, text: capped }, ...prev]);
-    setReviewText(""); setReviewName(""); setReviewConcours(""); setReviewStars(5);
-    setShowForm(false); setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-  };
 
   const concours=[
     {icon:"👩‍⚕️",label:"Aide-soignant",cat:"Paramédical"},{icon:"💉",label:"IFSI",cat:"Paramédical"},{icon:"👶",label:"Auxiliaire puériculture",cat:"Paramédical"},
@@ -101,74 +80,6 @@ export function LandingPage({ onEnterApp, onShowAuth, onShowPricing }) {
               <div style={{fontSize:"0.83rem",color:"var(--muted)",lineHeight:1.6}}>{f.desc}</div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ── Section Avis ── */}
-      <section style={{background:"var(--surface)",padding:"48px 24px",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}>
-        <div style={{maxWidth:700,margin:"0 auto"}}>
-          <h2 style={{fontFamily:"var(--font-display)",fontWeight:900,fontSize:"1.6rem",color:"var(--text)",textAlign:"center",marginBottom:8}}>Ce qu'ils en pensent</h2>
-          <p style={{textAlign:"center",color:"var(--muted)",fontSize:"0.85rem",marginBottom:28}}>Avis de candidats qui utilisent ConcoursSanté</p>
-
-          {/* Avis */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,marginBottom:24}}>
-            {reviews.map((r,i)=>(
-              <div key={i} className="card fade-up" style={{padding:"18px 20px"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-                  <div>
-                    <div style={{fontFamily:"var(--font-display)",fontWeight:800,fontSize:"0.88rem",color:"var(--text)"}}>{r.name}</div>
-                    <div style={{fontSize:"0.72rem",color:"var(--muted)"}}>{r.concours}</div>
-                  </div>
-                  <div style={{color:"#FFB800",fontSize:"0.85rem"}}>{"★".repeat(r.stars)}{"☆".repeat(5-r.stars)}</div>
-                </div>
-                <p style={{fontSize:"0.83rem",color:"var(--muted)",lineHeight:1.6,margin:0}}>{r.text}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Bouton laisser un avis */}
-          {!showForm && !submitted && (
-            <div style={{textAlign:"center"}}>
-              <button onClick={()=>setShowForm(true)} className="btn btn-ghost" style={{padding:"10px 24px",fontSize:"0.88rem"}}>
-                ✍️ Laisser un avis
-              </button>
-            </div>
-          )}
-
-          {submitted && (
-            <div className="fade-in" style={{textAlign:"center",padding:"12px",background:"rgba(29,184,164,0.1)",borderRadius:12,color:"var(--teal)",fontFamily:"var(--font-display)",fontWeight:700}}>
-              ✅ Merci pour ton avis !
-            </div>
-          )}
-
-          {/* Formulaire */}
-          {showForm && (
-            <div className="fade-in card" style={{padding:"20px",marginTop:8}}>
-              <div style={{fontFamily:"var(--font-display)",fontWeight:800,fontSize:"0.9rem",color:"var(--text)",marginBottom:14}}>Ton avis</div>
-
-              {/* Étoiles */}
-              <div style={{display:"flex",gap:6,marginBottom:14}}>
-                {[1,2,3,4,5].map(s=>(
-                  <button key={s} onClick={()=>setReviewStars(s)}
-                    style={{background:"none",border:"none",cursor:"pointer",fontSize:"1.4rem",color:s<=reviewStars?"#FFB800":"#DDD",padding:0,transition:"transform 0.1s"}}
-                    onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"}
-                    onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
-                    ★
-                  </button>
-                ))}
-              </div>
-
-              <input className="input" placeholder="Ton prénom *" value={reviewName} onChange={e=>setReviewName(e.target.value)} style={{marginBottom:10}}/>
-              <input className="input" placeholder="Ton concours (ex: IFSI, Pompier...)" value={reviewConcours} onChange={e=>setReviewConcours(e.target.value)} style={{marginBottom:10}}/>
-              <textarea className="input" placeholder="Ton avis en quelques mots... (3 lignes max)" value={reviewText} onChange={e=>setReviewText(e.target.value)}
-                style={{minHeight:80,resize:"none",marginBottom:14,fontFamily:"var(--font-body)"}}/>
-
-              <div style={{display:"flex",gap:10}}>
-                <button className="btn btn-teal" onClick={handleSubmitReview} style={{flex:1,justifyContent:"center",padding:"11px"}}>Publier</button>
-                <button className="btn btn-ghost" onClick={()=>setShowForm(false)} style={{padding:"11px 16px"}}>Annuler</button>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
